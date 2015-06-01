@@ -7,7 +7,7 @@
 
 - [ttab &mdash; Introduction](#ttab-&mdash-introduction)
 - [Installation](#installation)
-  - [Via the [npm registry](http://npmjs.com/package/ttab)](#via-the-npm-registryhttpnpmjscompackagettab)
+  - [Via the npm registry](#via-the-npm-registry)
   - [Manual installation](#manual-installation)
 - [Examples](#examples)
 - [Usage](#usage)
@@ -29,7 +29,7 @@ An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new ter
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
 
-## Via the [npm registry](http://npmjs.com/package/ttab)
+## Via the npm registry
 
 With [Node.js](http://nodejs.org/) installed, install via the [npm registry](https://www.npmjs.com/package/ttab) (you may have to prepend `sudo`):
 
@@ -37,8 +37,9 @@ With [Node.js](http://nodejs.org/) installed, install via the [npm registry](htt
 
 ## Manual installation
 
-* Download `bash` script <https://github.com/mklement0/stable/ttab>
-* Copy it to a folder in your `$PATH`, such as `/usr/local/bin`
+* Download [this `bash` script](https://raw.githubusercontent.com/mklement0/ttab/stable/bin/ttab) as `ttab`.
+* Make it executable with `chmod +x ttab`.
+* Move it to a folder in your `$PATH`, such as `/usr/local/bin`
 
 # Examples
 
@@ -155,6 +156,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **v0.1.1** (2015-06-01):
+  * [doc] README.md improved with respect to manual installation instructions.
 
 * **v0.1.0** (2015-06-01):
   * Initial release.
