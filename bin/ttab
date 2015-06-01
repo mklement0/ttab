@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+
+kTHIS_NAME=$(basename "$BASH_SOURCE")
+
+# Helper function for exiting with error message due to runtime error.
+#   die [errMsg [exitCode]]
+# Default error message states context and indicates that execution is aborted. Default exit code is 1.
+# Prefix for context is always prepended.
+# Note: An error message is *always* printed; if you just want to exit with a specific code silently, use `exit n` directly.
+die() {
+    echo "$kTHIS_NAME: ERROR: ${1:-"ABORTING due to unexpected error."}" 1>&2
+    exit ${2:-1} # Note: If the argument is non-numeric, the shell prints a warning and uses exit code 255.
+}
+
+# Helper function for exiting with error message due to invalid parameters.
+#   dieSyntax [errMsg]
+# Default error message is provided, as is prefix and suffix; exit code is always 2.
+dieSyntax() {
+    echo "$kTHIS_NAME: PARAMETER ERROR: ${1:-"Invalid parameter(s) specified."} Use -h for help." 1>&2
+    exit 2
+}
+
+# Output version number and exit, if requested. Note that the `ver="..."` statement is automatically updated by `make version VER=<newVer>` - DO keep the 'v' suffix in the variable _definition_.
+[[ $1 == '--version' ]] && { ver="v0.1.0"; echo "$kTHIS_NAME version ${ver#v}"; exit 0; }
+
+# Command-line help.
+if [[ "$1" == '--help' || "$1" == '-h' ]]; then
+    cat <<EOF
+
+SYNOPSIS:
+    $kTHIS_NAME [-w] [-s settings] [-t title] [-g|-G] [-d dir] [command [param1 ...]]
+
+DESCRIPTION:
+    Opens a new Terminal.app tab and optionally executes a command and assigns settings,
+    among other options.
+
+    The new tab will run a login shell (i.e., load the user's shell profile) and by default
+    inherit the working directory from the parent shell.
+
+    -w creates the new tab in a new window rather than in Terminal's front window.
+    -s specifies the settings to apply to the new tab, as defined in Terminal.app's
+      Preferences > Settings; e.g.: 'Grass'; settings determine the appearance and behavior
+      of the new tab; name matching is case-insensitive.
+    -t specifies a custom title to assign to the new tab; otherwise, if a command is specified,
+      its first token will become the new tab's title.
+    -d explicitly specifies a working directory for the new tab; by default, the invoking shell's
+      working directory is inherited (even if -w is also specified).
+    -g (back*g*round) causes Terminal not to activate, but within Terminal, the new tab
+      will become the active tab; useful in scripts that activate other applications beforehand.
+    -G causes Terminal not to activate *and* the active element within Terminal not to change;
+      i.e., the active window and tab stay the same. If Terminal happens to be active, the new 
+      tab will effectively open in the background.
+
+    NOTE: With -g or -G specified, for technical reasons, Terminal or the new tab will still activate
+          *briefly, temporarily* in most scenarios.
+
+    Quoted parameters are handled properly and there's no need to quote the command as a whole,
+    provided it is a *single* command.
+
+    To specify *multiple* commands, use 'eval' followed by a single, *double*-quoted string
+    in which the commands are separated by ';' Do NOT use backslash-escaped double quotes inside
+    this string; rather, use single-character backslash-escaping as needed.
+    Use 'exit' as the last command to automatically close the tab when the command
+    terminates; precede it with 'read -s -n 1' to wait for a keystroke first.
+
+    Alternatively, pass a script name or path; prefix with 'exec' to automatically
+    close the tab when the script terminates.
+
+EXAMPLES:
+    $kTHIS_NAME -t Green -s Grass  # create new tab with title 'Green' using settings 'Grass'
+    $kTHIS_NAME ls -l "\$Home/Library/Application Support"
+    $kTHIS_NAME -d "$HOME/Library/Application Support" ls -1
+    $kTHIS_NAME eval "ls \\\$HOME/Library/Application\ Support; echo Press a key to exit.; read -s -n 1; exit"
+    $kTHIS_NAME /path/to/someScript # execute a script and keep the tab open on termination
+    $kTHIS_NAME exec /path/to/someScript # execute a script and close the tab on termination.
+
+EOF
+    exit 0
+fi
+
+# Preprocess parameters: expand compressed options to individual options; e.g., '-ab' to '-a -b'
+params=() decompressed=0 argsReached=0 p=''
+for p in "$@"; do
+    if [[ $argsReached -eq 0 && $p == -[a-z,A-Z,0-9]?* ]]; then # compressed options?
+        decompressed=1
+        params+=(${p:0:2})
+        for (( i = 2; i < ${#p}; i++ )); do
+            params+=("-${p:$i:1}")
+        done
+    else
+        [[ $p == '--' ]] && argsReached=1
+        params+=("$p")
+    fi
+done
+if (( decompressed )); then set -- "${params[@]}"; fi; unset params decompressed argsReached p # Replace "$@" with the expanded parameter set.
+
+# Option-parameters loop.
+dirAbs=''
+tabTitle=''
+settingsName=''
+inBackground=0
+inNewWin=0
+while (( $# )); do
+  case "$1" in
+    -w)
+      inNewWin=1
+      ;;
+    -s)
+      shift
+      settingsName=$1
+      [[ -n $settingsName ]] || dieSyntax "Missing settings-name argument."
+      ;;
+    -t)
+      shift
+      tabTitle=$1
+      [[ -n $tabTitle ]] || dieSyntax "Missing title argument."
+      ;;
+    -d)
+      shift
+      dir=$1
+      [[ -n $dir ]] || dieSyntax "Missing directory argument."
+      dirAbs=$(cd "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"
+      ;;
+    -g)
+      inBackground=1
+      ;;
+    -G)
+      inBackground=2
+      ;;
+    --) # Explicit end-of-options marker.
+      shift   # Move to next param and proceed with data-parameter analysis below.
+      break
+      ;;
+    -*) # An unrecognized switch.
+      dieSyntax "Unrecognized option: '$1'. To force interpretation as non-option, precede with '--'. Use -h or --h for help."
+      ;;
+    *)  # 1st argument reached; proceed with argument-parameter analysis below.
+      break
+      ;;
+  esac
+  shift
+done
+
+# All remaining parameters, if any, make up the command to execute in the new tab/window.    
+    
+
+# AppleScript command definitions for Terminal.app - context 'tell application "Terminal"' is implied.
+CMD_TELL_START='tell application "Terminal"'
+CMD_TELL_END='end tell'
+
+    # Commands for opening a new tab in the current Terminal window.
+    # Sadly, there is no direct way to open a new tab in an existing window, so we must activate Terminal first, then send a keyboard shortcut.
+CMD_ACTIVATE='activate'
+
+  # Note: We use *menu-based GUI scripting* rather than *sending keystrokes via CMD_NEWTAB_1='tell application "System Events" to keystroke "t" using {command down}'
+  #       !! We try to be locale-independent, so we don't use menu-item command *names*; this requires us to make the following ASSUMPTIONS, which we expect to hold in the future:
+  #             - the new *window* commands are assumed to be in a *submenu* of the *1st command* ('New Window > ...') of the Shell menu.
+  #             - the new *tab* commands are assumed to be in a *submenu* of the *2nd command* ('New Tab > ...') of the Shell menu.
+  #       (a) compared to sending a keystroke, this is more robust and predictable; with sending a keystroke, the shell command to execute is *sometimes* sent to the *previous* tab, as the keystroke may not have been processed yet.
+  #           In the default case, the GUI scripting finds the command by its keyboard shortcut so as to work locale-independently; it does, however, make the following assumptions (other than the pretty safe assumption that the command is in the 3rd menu from the left, the "Shell" menu in English):
+  #       (b) it also allows us to create new tabs *with specific settings*, by finding the menu item by *name* (settings names are locale-*in*dependent, fortunately)
+  #           Using this is preferable to trying to apply settings *after* tab creation with `set current settings of selected tab ...`, as the latter only applies *visual* attributes, not *behavioral* (such as what to do when the shell exits)
+if (( inNewWin )); then
+  if [[ -n $settingsName ]]; then
+    CMD_NEWTAB_1="tell application \"System Events\" to tell menu 1 of menu item 1 of menu 1 of menu bar item 3 of menu bar 1 of application process \"Terminal\" to click menu item \"$settingsName\""
+    CMD_NEWTAB_2="set newTab to selected tab of front window"
+  else
+    CMD_NEWTAB_1=''
+    CMD_NEWTAB_2='set newTab to do script' # note that running `do script` without arguments (i.e., without a suffix specifying the target window (e.g., 'in front window')) creates a *new* window.
+  fi  
+    # For use with -G: commands for saving and restoring the previous state within Terminal
+  CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
+  CMD_REACTIVATE_PREV_TAB='set frontmost of prevWin to true'
+else
+  if [[ -n $settingsName ]]; then
+    CMD_NEWTAB_1="tell application \"System Events\" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process \"Terminal\" to click menu item \"$settingsName\""
+  else
+    CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click (first menu item whose value of attribute "AXMenuItemCmdChar" is "T" and value of attribute "AXMenuItemCmdModifiers" is 0)'
+  fi
+  CMD_NEWTAB_2='set newTab to selected tab of front window'
+    # For use with -G: commands for saving and restoring the previous state within Terminal
+  CMD_SAVE_ACTIVE_TAB='set prevTab to (selected tab of front window)'
+  CMD_REACTIVATE_PREV_TAB='set selected of prevTab to true'
+fi
+
+    # For use with -g: commands for saving and restoring the previous application
+CMD_SAVE_ACTIVE_APPNAME='tell application "System Events" to set prevAppName to displayed name of first process whose frontmost is true'
+CMD_REACTIVATE_PREV_APP='activate application prevAppName'
+
+  # Optional commands that are only used if the relevant options were specified.
+CMD_TITLE=''
+CMD_CUSTOM=''
+quotedShellCmds=''
+if (( $# )); then # Shell command(s) specified.
+  if [[ -z $tabTitle ]]; then
+        # Use the command's first token as the tab title.
+    tabTitle=$1
+    case "$tabTitle" in
+        exec|eval) # Use following token instead, if the 1st one is 'eval' or 'exec'.
+            tabTitle=$(echo "$2" | awk '{ print $1 }') 
+            ;;
+        cd) # Use last path component of following token instead, if the 1st one is 'cd'
+            tabTitle=$(basename "$2")
+            ;;
+    esac
+  fi
+      # The tricky part is to quote the command tokens properly when passing them to AppleScript:
+      # Quote all parameters (as needed) using printf '%q' - this will perform backslash-escaping.
+      # This will allow us to not have to deal with double quotes inside the double-quoted string that will be passed to `do script`.
+  quotedShellCmds=$(printf '%q ' "$@")  # note: we'll end up with a trailing space, but that's benign.
+fi
+
+  # If no directory was specified, we explicitly use the *current* working directory, 
+  # if we're called from *inside a script*.
+  # Rationale: Terminal.app only knows the working directory of the *top-level* shell running in each tab (as it defines an aux. function,
+  # update_terminal_cwd(), that is called via $PROMPT_COMMAND every time the prompt is displayed).
+  # Thus, when this script is invoked inside another script, it is the *top-level* shell's working directory that is invariably used by
+  # Terminal, even if the invoking script has changed the working directory. Since this is counter-intuitive, we compensate here
+  # by explicitly setting the working directory to the invoking script's with a prepended 'cd' command.
+  # $SHLVL tells us the nesting level of the current shell:
+  # 1 == top-level shell; since this script itself runs in a subshell (2, if invoked directly from the top-level shell), we can safely assume 
+  # that another *script* has invoked us, if $SHLVL >= 3.
+  # Furthermore, we want to exhibit the same behavior when creating a tab in a *new* window, whereas Terminal defaults to the home directory
+  # in that case - thus, regardless of $SHLVL, if -w is specified, we always use an explicit 'cd' command.
+if [[ -z $dirAbs && ($inNewWin -eq 1 || $SHLVL -ge 3) ]]; then
+  dirAbs=$PWD
+fi
+
+  # Prepend the 'cd' command, if specified or needed.
+if [[ -n $dirAbs ]]; then
+  quotedCdCmd=$(printf 'cd %q' "$dirAbs")
+  if [[ -n $quotedShellCmds ]]; then
+    quotedShellCmds="$quotedCdCmd; $quotedShellCmds"
+  else
+    quotedShellCmds=$quotedCdCmd
+  fi
+fi
+
+  # Synthesize the full shell command.
+if [[ -n $quotedShellCmds ]]; then
+      # Pass the commands as a single, double-quoted string, but escape all backslashes again (by doubling them), because AppleScript expects that.
+  CMD_CUSTOM="do script \"${quotedShellCmds//\\/\\\\}\" in newTab"
+fi
+
+if [[ -n $tabTitle ]]; then
+  CMD_TITLE="set custom title of newTab to \"$tabTitle\""
+fi
+
+#   # ??
+# echo "dirAbs [$dirAbs]"
+# echo "ct [$CMD_TITLE]"
+# echo "cc [$CMD_CUSTOM]"
+
+if (( inBackground )); then
+    # !! Sadly, because we must create a new tab by menu-based GUI scripting, we must briefly activate Terminal in order for the menu command to work correctly, then reactivate the previously active application.
+    if (( inBackground == 2 )); then # Restore the previously active tab after creating the new one and don't activate Terminal.
+        osascript -e "$CMD_TELL_START" -e "$CMD_SAVE_ACTIVE_APPNAME" -e "$CMD_SAVE_ACTIVE_TAB" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_REACTIVATE_PREV_APP" -e "$CMD_REACTIVATE_PREV_TAB" -e "$CMD_TELL_END" >/dev/null
+    else # Make the new tab the active one, but don't activate Terminal itself.
+        osascript -e "$CMD_TELL_START" -e "$CMD_SAVE_ACTIVE_APPNAME" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_REACTIVATE_PREV_APP" -e "$CMD_TELL_END" >/dev/null
+    fi
+else
+    osascript -e "$CMD_TELL_START" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_TELL_END" >/dev/null
+fi

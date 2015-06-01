@@ -1,0 +1,45 @@
+{
+  "name": "ttab",
+  "description": "OSX CLI for opening a new terminal tab/window, optionally with a command to execute and/or display settings",
+  "private": false,
+  "version": "0.1.0",
+  "os": [
+    "darwin"
+  ],
+  "preferGlobal": true,
+  "bin": {
+    "ttab": "bin/ttab"
+  },
+  "homepage": "https://github.com/mklement0/ttab",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mklement0/ttab.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mklement0/ttab/issues"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "keywords": [
+    "osx",
+    "terminal",
+    "cli"
+  ],
+  "author": "Michael Klement <mklement0@gmail.com> (http://same2u.net)",
+  "license": "MIT",
+  "net_same2u": {
+    "make_pkg": {
+      "tocOn": true,
+      "tocTitle": "**Contents**"
+    }
+  },
+  "devDependencies": {
+    "doctoc": "^0.13.0",
+    "json": "^9.0.3",
+    "replace": "^0.3.0",
+    "semver": "^4.2.0",
+    "tap": "^0.6.0",
+    "urchin": "^0.0.5"
+  }
+}
