@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Simply echo the number of arguments passed to the filename passed as the 1st argument
+echo $# >"$1"

@@ -21,7 +21,7 @@ dieSyntax() {
 }
 
 # Output version number and exit, if requested. Note that the `ver="..."` statement is automatically updated by `make version VER=<newVer>` - DO keep the 'v' suffix in the variable _definition_.
-[[ $1 == '--version' ]] && { ver="v0.1.2"; echo "$kTHIS_NAME version ${ver#v}"; exit 0; }
+[[ $1 == '--version' ]] && { ver="v0.1.3"; echo "$kTHIS_NAME version ${ver#v}"; exit 0; }
 
 # Command-line help.
 if [[ "$1" == '--help' || "$1" == '-h' ]]; then
@@ -33,6 +33,11 @@ SYNOPSIS:
 DESCRIPTION:
     Opens a new Terminal.app tab and optionally executes a command and assigns settings,
     among other options.
+
+    Important: Terminal must be allowed assisistive access in order for this utility
+    to work, which requires one-time authorization with administrative privileges.
+    If you get error messages instead of being prompted, authorize Terminal.app via
+    System Preferences > Security & Privacy > Privacy > Accessibility.
 
     The new tab will run a login shell (i.e., load the user's shell profile) and by default
     inherit the working directory from the parent shell.
@@ -78,79 +83,50 @@ EOF
     exit 0
 fi
 
-# Preprocess parameters: expand compressed options to individual options; e.g., '-ab' to '-a -b'
-params=() decompressed=0 argsReached=0 p=''
-for p in "$@"; do
-    if [[ $argsReached -eq 0 && $p == -[a-z,A-Z,0-9]?* ]]; then # compressed options?
-        decompressed=1
-        params+=(${p:0:2})
-        for (( i = 2; i < ${#p}; i++ )); do
-            params+=("-${p:$i:1}")
-        done
-    else
-        [[ $p == '--' ]] && argsReached=1
-        params+=("$p")
-    fi
-done
-if (( decompressed )); then set -- "${params[@]}"; fi; unset params decompressed argsReached p # Replace "$@" with the expanded parameter set.
+# Undocumented debugging support: if the very first argument is --dry-run, we print out the synthesized AppleScript rather than executing it.
+printScript=0 dryRun=0
+{ [[ $1 == '--dry-run' ]] && { dryRun=1; shift; }; } || { [[ $1 == '--print-script' ]] && { printScript=1; shift; }; }
 
-# Option-parameters loop.
+# Parse options
 dirAbs=''
 tabTitle=''
 settingsName=''
 inBackground=0
 inNewWin=0
-while (( $# )); do
-  case "$1" in
-    -w)
+while getopts ':wgGs:t:d:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
+  [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
+  [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
+  case "$opt" in
+    w)
       inNewWin=1
       ;;
-    -s)
-      shift
-      settingsName=$1
-      [[ -n $settingsName ]] || dieSyntax "Missing settings-name argument."
+    s)
+      settingsName=$OPTARG
       ;;
-    -t)
-      shift
-      tabTitle=$1
-      [[ -n $tabTitle ]] || dieSyntax "Missing title argument."
+    t)
+      tabTitle=$OPTARG
       ;;
-    -d)
-      shift
-      dir=$1
-      [[ -n $dir ]] || dieSyntax "Missing directory argument."
-      dirAbs=$(cd "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"
+    d)
+      dir=$OPTARG
+      dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"
       ;;
-    -g)
+    g)
       inBackground=1
       ;;
-    -G)
+    G)
       inBackground=2
       ;;
-    --) # Explicit end-of-options marker.
-      shift   # Move to next param and proceed with data-parameter analysis below.
-      break
-      ;;
-    -*) # An unrecognized switch.
-      dieSyntax "Unrecognized option: '$1'. To force interpretation as non-option, precede with '--'. Use -h or --h for help."
-      ;;
-    *)  # 1st argument reached; proceed with argument-parameter analysis below.
-      break
+    *) # An unrecognized switch.
+      dieSyntax "DESIGN ERROR: unanticipated option: $opt"
       ;;
   esac
-  shift
 done
+shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
-# All remaining parameters, if any, make up the command to execute in the new tab/window.    
-    
+# All remaining arguments, if any, make up the command to execute in the new tab/window.        
 
-# AppleScript command definitions for Terminal.app - context 'tell application "Terminal"' is implied.
-CMD_TELL_START='tell application "Terminal"'
-CMD_TELL_END='end tell'
-
-    # Commands for opening a new tab in the current Terminal window.
-    # Sadly, there is no direct way to open a new tab in an existing window, so we must activate Terminal first, then send a keyboard shortcut.
-CMD_ACTIVATE='activate'
+# Clear any variables with names matching those we'll be using below, to be safe.
+for n in ${!CMD_*}; do unset $n; done
 
   # Note: We use *menu-based GUI scripting* rather than *sending keystrokes via CMD_NEWTAB_1='tell application "System Events" to keystroke "t" using {command down}'
   #       !! We try to be locale-independent, so we don't use menu-item command *names*; this requires us to make the following ASSUMPTIONS, which we expect to hold in the future:
@@ -160,7 +136,7 @@ CMD_ACTIVATE='activate'
   #           In the default case, the GUI scripting finds the command by its keyboard shortcut so as to work locale-independently; it does, however, make the following assumptions (other than the pretty safe assumption that the command is in the 3rd menu from the left, the "Shell" menu in English):
   #       (b) it also allows us to create new tabs *with specific settings*, by finding the menu item by *name* (settings names are locale-*in*dependent, fortunately)
   #           Using this is preferable to trying to apply settings *after* tab creation with `set current settings of selected tab ...`, as the latter only applies *visual* attributes, not *behavioral* (such as what to do when the shell exits)
-if (( inNewWin )); then
+if (( inNewWin )); then # create the tab in a new window
   if [[ -n $settingsName ]]; then
     CMD_NEWTAB_1="tell application \"System Events\" to tell menu 1 of menu item 1 of menu 1 of menu bar item 3 of menu bar 1 of application process \"Terminal\" to click menu item \"$settingsName\""
     CMD_NEWTAB_2="set newTab to selected tab of front window"
@@ -168,28 +144,36 @@ if (( inNewWin )); then
     CMD_NEWTAB_1=''
     CMD_NEWTAB_2='set newTab to do script' # note that running `do script` without arguments (i.e., without a suffix specifying the target window (e.g., 'in front window')) creates a *new* window.
   fi  
-    # For use with -G: commands for saving and restoring the previous state within Terminal
-  CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
-  CMD_REACTIVATE_PREV_TAB='set frontmost of prevWin to true'
-else
+  if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within Terminal
+    CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
+    CMD_REACTIVATE_PREV_TAB='set frontmost of prevWin to true' # Note that while  *Terminal.app*'s  windows have a `frontmost` property that allows their activation within the app, most other (all other?) apps' windows do not.
+  fi
+else # Create the new tab in the current window (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
   if [[ -n $settingsName ]]; then
     CMD_NEWTAB_1="tell application \"System Events\" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process \"Terminal\" to click menu item \"$settingsName\""
   else
     CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click (first menu item whose value of attribute "AXMenuItemCmdChar" is "T" and value of attribute "AXMenuItemCmdModifiers" is 0)'
   fi
   CMD_NEWTAB_2='set newTab to selected tab of front window'
-    # For use with -G: commands for saving and restoring the previous state within Terminal
-  CMD_SAVE_ACTIVE_TAB='set prevTab to (selected tab of front window)'
-  CMD_REACTIVATE_PREV_TAB='set selected of prevTab to true'
+  if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within Terminal
+    CMD_SAVE_ACTIVE_TAB='set prevTab to (selected tab of front window)'
+    CMD_REACTIVATE_PREV_TAB='set selected of prevTab to true'
+  fi
 fi
 
-    # For use with -g: commands for saving and restoring the previous application
-CMD_SAVE_ACTIVE_APPNAME='tell application "System Events" to set prevAppName to displayed name of first process whose frontmost is true'
-CMD_REACTIVATE_PREV_APP='activate application prevAppName'
+    # For use with -g and -G: commands for saving and restoring the previous application
+if (( inBackground )); then
+  CMD_SAVE_ACTIVE_APPNAME='set prevAppName to name of application (path to frontmost application as text)'
+  CMD_REACTIVATE_PREV_APP='activate application prevAppName'
+  # !! With -g and -G, sadly, we must, unfortunately, briefly activate Terminal in order for the menu-command GUI scripting to work correctly, then reactivate the previously active application.
+  # !! On 10.10+, activate is no longer *synchronous*, so we must wait until Terminal is truly activated (frontmost)
+  CMD_ACTIVATE='activate
+  repeat until frontmost
+      delay 0.1
+  end repeat'
+fi
 
   # Optional commands that are only used if the relevant options were specified.
-CMD_TITLE=''
-CMD_CUSTOM=''
 quotedShellCmds=''
 if (( $# )); then # Shell command(s) specified.
   if [[ -z $tabTitle ]]; then
@@ -246,18 +230,24 @@ if [[ -n $tabTitle ]]; then
   CMD_TITLE="set custom title of newTab to \"$tabTitle\""
 fi
 
-#   # ??
-# echo "dirAbs [$dirAbs]"
-# echo "ct [$CMD_TITLE]"
-# echo "cc [$CMD_CUSTOM]"
+# Now, synthesize the entire AppleScript
+# !! At least on 10.10, the commands to save the active application and to reactivate it later must be OUTSIDE of the tell application "Terminal" block to work.
+read -d '' -r script <<EOF
+$CMD_SAVE_ACTIVE_APPNAME
+tell application "Terminal"
+  $CMD_SAVE_ACTIVE_TAB
+  $CMD_ACTIVATE
+  $CMD_NEWTAB_1
+  $CMD_NEWTAB_2
+  $CMD_TITLE
+  $CMD_CUSTOM
+  $CMD_REACTIVATE_PREV_TAB
+end tell
+$CMD_REACTIVATE_PREV_APP
+return
+EOF
 
-if (( inBackground )); then
-    # !! Sadly, because we must create a new tab by menu-based GUI scripting, we must briefly activate Terminal in order for the menu command to work correctly, then reactivate the previously active application.
-    if (( inBackground == 2 )); then # Restore the previously active tab after creating the new one and don't activate Terminal.
-        osascript -e "$CMD_TELL_START" -e "$CMD_SAVE_ACTIVE_APPNAME" -e "$CMD_SAVE_ACTIVE_TAB" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_REACTIVATE_PREV_APP" -e "$CMD_REACTIVATE_PREV_TAB" -e "$CMD_TELL_END" >/dev/null
-    else # Make the new tab the active one, but don't activate Terminal itself.
-        osascript -e "$CMD_TELL_START" -e "$CMD_SAVE_ACTIVE_APPNAME" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_REACTIVATE_PREV_APP" -e "$CMD_TELL_END" >/dev/null
-    fi
-else
-    osascript -e "$CMD_TELL_START" -e "$CMD_ACTIVATE" -e "$CMD_NEWTAB_1" -e "$CMD_NEWTAB_2" -e "$CMD_TITLE" -e "$CMD_CUSTOM" -e "$CMD_TELL_END" >/dev/null
-fi
+(( dryRun || printScript )) && { printf %s "$script"; (( dryRun )) && exit; }
+
+# Execute the AppleScript
+osascript <<<"$script"

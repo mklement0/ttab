@@ -1,0 +1,53 @@
+#!/usr/bin/env osascript
+
+# Note: For most tests, we create the new tab in the front window, both because that is ttab's core feature (a simple `do script` without a target will open a tab in a new window).
+#       Also, opening new tabs in the front window is less visually disruptive.
+#       Note that while the tests terminate the new tab's shell, the tab may stay open, depending on its settings.
+
+set ttabBin to "../bin/ttab"
+
+tell application "Terminal"'s front window
+    
+  set tabCountBefore to count of tabs
+  set thisTab to selected tab
+  
+  set cmd to "eval 'uname -v >/tmp/_ttab_test_tmpout; :'"
+  
+  # Create tab 
+  do shell script ttabBin & " " & cmd
+  
+  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  
+  # Wait till tab has finished executing.
+  my waitUntilTerminalTabNotBusy(selected tab, 3)
+
+  try
+    do shell script "egrep -iq '^Darwin Kernel' /tmp/_ttab_test_tmpout; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"
+  on error
+    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
+    error "New tab (open in separate window) did not (successfully) execute the specified command, " & cmd & "."
+  end try
+
+  # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
+  # because it waits for the tab to be ready to process the command.
+  do script "exit" in selected tab
+  set selected tab to thisTab # Re-select the previously active tab
+  
+end tell
+
+return
+
+on waitUntilTerminalTabNotBusy(tabTarget, timeoutSecs)
+  local elapsedSoFar
+  set elapsedSoFar to 0
+  tell application "Terminal"
+    repeat while (busy of tabTarget)
+      if elapsedSoFar ≥ timeoutSecs then
+        error "Terminal tab '" & (name of tab) & "' is unexpectedly still busy after " & timeoutSecs & " seconds."
+      end if
+      delay 0.1
+      set elapsedSoFar to elapsedSoFar + 0.1
+    end repeat
+    delay 0.1 # just for good measure - apparently, `busy` sometimes prematurely reports false
+  end tell
+end waitUntilTerminalTabNotBusy

@@ -1,0 +1,38 @@
+#!/usr/bin/env osascript
+
+set ttabBin to "../bin/ttab"
+
+tell application "Terminal"
+    
+  set winCountBefore to count of windows
+
+  # Create tab in new window.
+  do shell script ttabBin & " -w"
+
+  if not (count of windows) > winCountBefore then error "Failed to create new window."
+
+  # Close the new window, but we must wait for its shell to no longer be busy so as to avoid a 'really close?' prompt.
+  my closeTerminalWindow(front window, 3)
+
+end tell
+
+return
+
+# Closes a Terminal window after waiting for it to no longer be busy.
+# Times out with an error after the specified number of seconds.
+# The raison d'être for this handler is that blindly trying to close a Terminal window that's running a process (other than the shell) will result in an asynchronous, interactive 'really close?' prompt.
+on closeTerminalWindow(win, timeoutSecs)
+  local elapsedSoFar
+  set elapsedSoFar to 0
+  tell application "Terminal"
+    repeat while (busy of selected tab of win)
+      if elapsedSoFar ≥ timeoutSecs then
+        error "Terminal window '" & (name of win) & "' is unexpectedly still busy after " & timeoutSecs & " seconds."
+      end if
+      delay 0.1
+      set elapsedSoFar to elapsedSoFar + 0.1
+    end repeat
+    delay 0.1 # just for good measure - apparently, `busy` sometimes prematurely reports false
+    close win
+  end tell
+end closeTerminalWindow

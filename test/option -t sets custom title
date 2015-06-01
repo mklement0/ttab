@@ -1,0 +1,35 @@
+#!/usr/bin/env osascript
+
+# Note: For most tests, we create the new tab in the front window, both because that is ttab's core feature (a simple `do script` without a target will open a tab in a new window).
+#       Also, opening new tabs in the front window is less visually disruptive.
+#       Note that while the tests terminate the new tab's shell, the tab may stay open, depending on its settings.
+
+set ttabBin to "../bin/ttab"
+
+tell application "Terminal"'s front window
+    
+  set tabCountBefore to count of tabs
+  set thisTab to selected tab
+
+  set customTitle to "custom title"
+
+  # Create tab with custom title.
+  do shell script ttabBin & " -t " & quoted form of customTitle
+
+  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+
+  # Ensure that the desired title has been set
+  if custom title of selected tab ≠ customTitle then    
+    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
+    error "New tab doesn't have the expected custom title, " & customTitle & "."
+  end if
+
+  # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
+  # because it waits for the tab to be ready to process the command.
+  do script "exit" in selected tab
+  set selected tab to thisTab # Re-select the previously active tab
+
+end tell
+
+return
+

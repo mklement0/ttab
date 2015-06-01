@@ -84,6 +84,11 @@ DESCRIPTION:
     Opens a new Terminal.app tab and optionally executes a command and assigns settings,
     among other options.
 
+    Important: Terminal must be allowed assisistive access in order for this utility
+    to work, which requires one-time authorization with administrative privileges.
+    If you get error messages instead of being prompted, authorize Terminal.app via
+    System Preferences > Security & Privacy > Privacy > Accessibility.
+
     The new tab will run a login shell (i.e., load the user's shell profile) and by default
     inherit the working directory from the parent shell.
 
@@ -155,6 +160,11 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **v0.1.3** (2015-06-01):
+  * [fix] The -g and -G options again correctly do not activate Terminal.app when creating the desired tab.
+  * [enhancement] Option parsing now accepts option-arguments directly attached to the option.
+  * [dev] Tests added.
 
 * **v0.1.2** (2015-06-01):
   * [doc] Manual-installation link and instructions fixed; examples fixed.
