@@ -21,7 +21,7 @@ dieSyntax() {
 }
 
 # Output version number and exit, if requested. Note that the `ver="..."` statement is automatically updated by `make version VER=<newVer>` - DO keep the 'v' suffix in the variable _definition_.
-[[ $1 == '--version' ]] && { ver="v0.1.1"; echo "$kTHIS_NAME version ${ver#v}"; exit 0; }
+[[ $1 == '--version' ]] && { ver="v0.1.2"; echo "$kTHIS_NAME version ${ver#v}"; exit 0; }
 
 # Command-line help.
 if [[ "$1" == '--help' || "$1" == '-h' ]]; then
@@ -68,7 +68,7 @@ DESCRIPTION:
 
 EXAMPLES:
     $kTHIS_NAME -t Green -s Grass  # create new tab with title 'Green' using settings 'Grass'
-    $kTHIS_NAME ls -l "\$Home/Library/Application Support"
+    $kTHIS_NAME ls -l "\$HOME/Library/Application Support"
     $kTHIS_NAME -d "$HOME/Library/Application Support" ls -1
     $kTHIS_NAME eval "ls \\\$HOME/Library/Application\ Support; echo Press a key to exit.; read -s -n 1; exit"
     $kTHIS_NAME /path/to/someScript # execute a script and keep the tab open on termination

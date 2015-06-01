@@ -44,18 +44,17 @@ With [Node.js](http://nodejs.org/) installed, install via the [npm registry](htt
 # Examples
 
 ```shell
-
 # Open a new tab in the current terminal window.
 ttab
 
-# Open a new tab in a new window.
+# Open a new tab in a new terminal window.
 ttab -n 
 
 # Open a new tab and execute the specified command.
-ttab ls -l "$Home/Library/Application Support"
+ttab ls -l "$HOME/Library/Application Support"
 
 # Open a new tab, switch to the specified dir., then execute the specified command.
-ttab -d "/Users/mklement/Library/Application Support" ls -1 
+ttab -d ~/Library/Application\ Support ls -1 
 
 # Open a new tab with title 'How Green Was My Valley' and settings 'Grass'
 ttab -t 'How Green Was My Valley' -s Grass
@@ -119,7 +118,7 @@ DESCRIPTION:
 
 EXAMPLES:
     ttab -t Green -s Grass  # create new tab with title 'Green' using settings 'Grass'
-    ttab ls -l "$Home/Library/Application Support"
+    ttab ls -l "$HOME/Library/Application Support"
     ttab -d "\~/Library/Application Support" ls -1
     ttab eval "ls \$HOME/Library/Application\ Support; echo Press a key to exit.; read -s -n 1; exit"
     ttab /path/to/someScript # execute a script and keep the tab open on termination
@@ -156,6 +155,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **v0.1.2** (2015-06-01):
+  * [doc] Manual-installation link and instructions fixed; examples fixed.
 
 * **v0.1.1** (2015-06-01):
   * [doc] README.md improved with respect to manual installation instructions.
