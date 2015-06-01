@@ -4,6 +4,10 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **v0.1.4** (2015-06-01):
+  * [doc] Improved CLI usage help; keywords added to `package.json`.
+  * [dev] `make browse` now opens the GitHub repo in the default browser.
+
 * **v0.1.3** (2015-06-01):
   * [fix] The -g and -G options again correctly do not activate Terminal.app when creating the desired tab.
   * [enhancement] Option parsing now accepts option-arguments directly attached to the option.

@@ -23,6 +23,17 @@ _no-target-specified:
 list:
 	@$(MAKE) -pRrn -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' | sort
 
+# Open this package's online repository URL in the default browser.
+# Note: Currently only supports OSX and Debian-based platforms.
+.PHONY: browse
+browse:
+	@exe=; url=`json -f package.json repository.url`; \
+	 [[ `uname` == 'Darwin' ]] && exe='open'; \
+	 [[ -n `command -v xdg-open` ]] && exe='xdg-open'; \
+	 [[ -n $$exe ]] || { echo "Don't know how to open $$url in the default browser on this platform." >&2; exit 1; }; \
+	 "$$exe" "$$url"
+
+
 .PHONY: test
 # To optionally skip tests in the context of target 'release', for instance, invoke with NOTEST=1; e.g.: make release NOTEST=1
 test:

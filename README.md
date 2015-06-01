@@ -84,7 +84,7 @@ DESCRIPTION:
     Opens a new Terminal.app tab and optionally executes a command and assigns settings,
     among other options.
 
-    Important: Terminal must be allowed assisistive access in order for this utility
+    Important: Terminal must be allowed assistive access in order for this utility
     to work, which requires one-time authorization with administrative privileges.
     If you get error messages instead of being prompted, authorize Terminal.app via
     System Preferences > Security & Privacy > Privacy > Accessibility.
@@ -93,21 +93,22 @@ DESCRIPTION:
     inherit the working directory from the parent shell.
 
     -w creates the new tab in a new window rather than in Terminal's front window.
-    -s specifies the settings to apply to the new tab, as defined in Terminal.app's
-      Preferences > Settings; e.g.: 'Grass'; settings determine the appearance and behavior
+    -s specifies the settings (profiles) to apply to the new tab, as defined in Terminal.app's
+      Preferences > Profiles, such as 'Grass'; settings determine the appearance and behavior
       of the new tab; name matching is case-insensitive.
     -t specifies a custom title to assign to the new tab; otherwise, if a command is specified,
       its first token will become the new tab's title.
     -d explicitly specifies a working directory for the new tab; by default, the invoking shell's
       working directory is inherited (even if -w is also specified).
     -g (back*g*round) causes Terminal not to activate, but within Terminal, the new tab
-      will become the active tab; useful in scripts that activate other applications beforehand.
+      will become the active tab; useful in scripts that launch other applications and
+      don't want Terminal to steal focus later.
     -G causes Terminal not to activate *and* the active element within Terminal not to change;
       i.e., the active window and tab stay the same. If Terminal happens to be active, the new 
       tab will effectively open in the background.
 
-    NOTE: With -g or -G specified, for technical reasons, Terminal or the new tab will still activate
-          *briefly, temporarily* in most scenarios.
+    NOTE: With -g or -G specified, for technical reasons, Terminal or the new tab will still
+          activate *briefly, temporarily* in most scenarios.
 
     Quoted parameters are handled properly and there's no need to quote the command as a whole,
     provided it is a *single* command.
@@ -160,6 +161,10 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **v0.1.4** (2015-06-01):
+  * [doc] Improved CLI usage help; keywords added to `package.json`.
+  * [dev] `make browse` now opens the GitHub repo in the default browser.
 
 * **v0.1.3** (2015-06-01):
   * [fix] The -g and -G options again correctly do not activate Terminal.app when creating the desired tab.
