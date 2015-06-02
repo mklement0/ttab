@@ -4,6 +4,9 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **v0.1.6** (2015-06-01):
+  * [doc] Read-me improvements; typo in CLI usage help fixed.
+
 * **v0.1.5** (2015-06-01):
   * [doc] Improved CLI usage help.
 
