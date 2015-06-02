@@ -78,57 +78,76 @@ $ ttab --help
 
 
 SYNOPSIS:
-    ttab [-w] [-s settings] [-t title] [-g|-G] [-d dir] [command [param1 ...]]
+  ttab [-w] [-s settings] [-t title] [-g|-G] [-d dir] [command [param1 ...]]
 
 DESCRIPTION:
-    Opens a new Terminal.app tab and optionally executes a command and assigns settings,
-    among other options.
+  Opens a new Terminal.app tab and optionally executes a
+  command and assigns settings,     among other options.
 
-    Important: Terminal must be allowed assistive access in order for this utility
-    to work, which requires one-time authorization with administrative privileges.
-    If you get error messages instead of being prompted, authorize Terminal.app via
-    System Preferences > Security & Privacy > Privacy > Accessibility.
+  IMPORTANT: *Terminal.app must be allowed assistive access* in order for this
+  utility to work, which requires one-time authorization with administrative
+  privileges. If you get error messages instead of being prompted, authorize
+  Terminal.app via System Preferences > Security & Privacy > Privacy >
+  Accessibility.
 
-    The new tab will run a login shell (i.e., load the user's shell profile) and by default
-    inherit the working directory from the parent shell.
+  The new tab will run a login shell (i.e., load the user's shell profile)
+  and by default inherit the working directory from the parent shell.
 
-    -w creates the new tab in a new window rather than in Terminal's front window.
-    -s specifies the settings (profiles) to apply to the new tab, as defined in Terminal.app's
-      Preferences > Profiles, such as 'Grass'; settings determine the appearance and behavior
-      of the new tab; name matching is case-insensitive.
-    -t specifies a custom title to assign to the new tab; otherwise, if a command is specified,
-      its first token will become the new tab's title.
-    -d explicitly specifies a working directory for the new tab; by default, the invoking shell's
-      working directory is inherited (even if -w is also specified).
-    -g (back*g*round) causes Terminal not to activate, but within Terminal, the new tab
-      will become the active tab; useful in scripts that launch other applications and
-      don't want Terminal to steal focus later.
-    -G causes Terminal not to activate *and* the active element within Terminal not to change;
-      i.e., the active window and tab stay the same. If Terminal happens to be active, the new 
-      tab will effectively open in the background.
+  -w
+    creates the new tab in a new window rather than in Terminal's front
+    window.
+  -s
+    specifies the settings (profiles) to apply to the new tab, as
+    defined in Terminal.app's Preferences > Profiles, such as 'Grass';
+    settings determine the appearance and behavior of the new tab; name
+    matching is case-insensitive.
+  -t 
+    specifies a custom title to assign to the new tab; otherwise, if a 
+    command is specified, its first token will become the new tab's title.
+  -d
+    explicitly specifies a working directory for the new tab; by default, the
+    invoking shell's working directory is inherited (even if -w is also
+    specified).
+  -g
+    (back*g*round) causes Terminal not to activate, if it isn't the frontmost
+    application); within Terminal, however, the new tab will become active
+    active tab; useful in scripts that launch other applications and
+    don't want Terminal to steal focus later.
+  -G
+    causes Terminal not to activate *and* the active element within Terminal
+    not to change; i.e., the active window and tab stay the same. If Terminal
+    happens to be fronmost, the new tab will effectively open in the
+    background.
 
-    NOTE: With -g or -G specified, for technical reasons, Terminal or the new tab will still
-          activate *briefly, temporarily* in most scenarios.
+  NOTE: With -g or -G specified, for technical reasons, Terminal / the new
+        tab will still activate *briefly, temporarily* in most scenarios.
 
-    Quoted parameters are handled properly and there's no need to quote the command as a whole,
-    provided it is a *single* command.
+  Quoted parameters are handled properly and there's no need to quote the
+  command as a whole, provided it is a *single* command.
+  Prefix such a single command with 'exec' to automatically close the tab
+  when the command terminates, assuming the tab's settings are configured to
+  close the tab on termination of the shell.
 
-    To specify *multiple* commands, use 'eval' followed by a single, *double*-quoted string
-    in which the commands are separated by ';' Do NOT use backslash-escaped double quotes inside
-    this string; rather, use single-character backslash-escaping as needed.
-    Use 'exit' as the last command to automatically close the tab when the command
-    terminates; precede it with 'read -s -n 1' to wait for a keystroke first.
-
-    Alternatively, pass a script name or path; prefix with 'exec' to automatically
-    close the tab when the script terminates.
+  To specify *multiple* commands, use 'eval' followed by a single,
+  *double*-quoted string in which the commands are separated by ';' Do NOT
+  use backslash-escaped double quotes *inside this string*; rather, use
+  *single-character backslash-escaping* as needed. Use 'exit' as the last
+  command to automatically close the tab when the command terminates,
+  assuming the tab's settings are configured to close the tab on termination
+  of the shell.
+  Precede 'exit' with 'read -s -n 1' to wait for a keystroke first.
 
 EXAMPLES:
-    ttab -t Green -s Grass  # create new tab with title 'Green' using settings 'Grass'
-    ttab ls -l "$HOME/Library/Application Support"
-    ttab -d "\~/Library/Application Support" ls -1
-    ttab eval "ls \$HOME/Library/Application\ Support; echo Press a key to exit.; read -s -n 1; exit"
-    ttab /path/to/someScript # execute a script and keep the tab open on termination
-    ttab exec /path/to/someScript # execute a script and close the tab on termination.
+  # Create new tab with title 'Green' using settings 'Grass'
+  ttab -t Green -s Grass  
+  ttab ls -l "$HOME/Library/Application Support"
+  ttab -d "\~/Library/Application Support" ls -1
+  ttab /path/to/someScript arg1 arg2
+  # Execute a script and close the tab on termination (settings permitting).
+  ttab exec /path/to/someScript arg1 arg2
+  # Pass a multi-command string via 'eval', wait for keystroke, then exit.
+  ttab eval "ls \$HOME/Library/Application\ Support; 
+                    echo Press a key to exit.; read -s -n 1; exit"
 ```
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'LICENSE.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
@@ -161,6 +180,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **v0.1.5** (2015-06-01):
+  * [doc] Improved CLI usage help.
 
 * **v0.1.4** (2015-06-01):
   * [doc] Improved CLI usage help; keywords added to `package.json`.
