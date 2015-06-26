@@ -21,18 +21,28 @@ _no-target-specified:
 # Lists all targets defined in this makefile.
 .PHONY: list
 list:
-	@$(MAKE) -pRrn -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' | sort
+	@$(MAKE) -pRrn -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | grep -Ev -e '^[^[:alnum:]]' -e '^$@$$' | sort
 
-# Open this package's online repository URL in the default browser.
+# Open this package's online repository URL (typically, on GitHub) in the default browser.
 # Note: Currently only supports OSX and Debian-based platforms.
 .PHONY: browse
 browse:
-	@exe=; url=`json -f package.json repository.url`; \
+	@exe=; url=`json -f package.json repository.url` || exit; \
 	 [[ `uname` == 'Darwin' ]] && exe='open'; \
 	 [[ -n `command -v xdg-open` ]] && exe='xdg-open'; \
 	 [[ -n $$exe ]] || { echo "Don't know how to open $$url in the default browser on this platform." >&2; exit 1; }; \
 	 "$$exe" "$$url"
 
+# Open this package's page in the npm registry.
+# Note: Currently only supports OSX and Debian-based platforms.
+.PHONY: browse-npm
+browse-npm:
+	@exe=; [[ `json -f package.json private` == 'true' ]] && { echo "This package is marked private (not for publication in the npm registry)." >&2; exit 1; }; \
+	 url="https://www.npmjs.com/package/`json -f package.json name`" || exit; \
+	 [[ `uname` == 'Darwin' ]] && exe='open'; \
+	 [[ -n `command -v xdg-open` ]] && exe='xdg-open'; \
+	 [[ -n $$exe ]] || { echo "Don't know how to open $$url in the default browser on this platform." >&2; exit 1; }; \
+	 "$$exe" "$$url"
 
 .PHONY: test
 # To optionally skip tests in the context of target 'release', for instance, invoke with NOTEST=1; e.g.: make release NOTEST=1
@@ -53,60 +63,93 @@ push: _need-clean-ws-or-no-untracked-files
 	 echo "-- Pushed."
 
 
-# If VER is *not* specified: reports the current version number - both by package.json and as defined by the latest git tag.
-# If VER *is* specified: sets the version number in source files and package.json; increments from the latest package.json version number.
-#  An explicitly specified version number must be *higher* than the current one; pass variable FORCE=1 to override this in exceptional situations.
+# Reports the current version number - both from package.json and as defined by the latest git tag
+# Implementation note: simply uses 'version' as a prerequisite, which queries $(MAKECMDGOALS) to adjust its behavior based on the caller.
+.PHONY: verinfo
+verinfo: version
+
+# Increments the package's version number:
+# Unless called via 'make verinfo', the workspace must be clean or at least have no untracked files.
+# If VER is *not* specified in the environment:
+#   Reports the current version number - both from package.json and as defined by the latest git tag.
+#   If 'make version' was called directly, then prompts to change the version number.
+#   If called via 'make release', only prompts to change the version number if the git tag version number is the same as the package's.
+#   VER is set to the value entered and processing continues below.
+# If VER *is* specified or continuing from above:
+#   Validates the new version number:
+#      If an increment specifier was given, increments from the latest package.json version number (as the version numbers stored in source files are assumed to be in sync with package.json).
+#      	 Implementation note: semver, as of v4.3.6, does not validate increment specifiers and simply defaults to 'patch' in case of an valid specifier; thus, we roll our own validation here.
+#      An increment specifier starting with 'pre' increments [to] a prerelease version number. By default, this simply appends or increments '-<num>', whereas '--preid <id>' can be used
+#      to append '-<id><num>' instead; however, we don't expose that, at least for now, though the user may specify an explicit, full pre-release version number.
+#      We use tag 'pre' with npm publish --tag, so as to have the latest prerelease be installable with <pkg>@pre, analogous to the (implicit) 'latest' tag that tracks production releases.
+#      An explicitly specified version number must be *higher* than the current one; pass variable FORCE=1 to override this in exceptional situations.
+#   Updates the version number in package.json and in source files in ./bin and ./lib.
 .PHONY: version
 version:
-ifndef VER
-	@if [[ '$(MAKECMDGOALS)' == 'version' ]]; then \
-	   printf 'Current version:\n\tv%s (from package.json)\n\t%s (from git tag)\n' `json -f package.json version` `git describe --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo '(none)'`; \
-	   printf 'Note:\tTo increment the version number or make a release, run:\n\t\tmake version VER=<new-version>\n\t\tmake release [VER=<new-version>]\n\twhere <new-version> is either an increment specifier (patch, minor, major,\n\tprepatch, preminor, premajor, prerelease), or an explicit <major>.<minor>.<patch> version number.\n\tIf the package.json version number is already ahead of the latest Git version tag,\n\tspecifying VER=<new-version> with `make release` is optional.\n'; \
-   else \
-   	 printf '===  RELEASING:\n\t%s -> **v%s** \n===\n' `git describe --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo '(none)'` `json -f package.json version`; \
-   	 read -p 'Proceed (y/N)?: ' -re response && [[ "$$response" =~ [yY] ]] || { echo 'Aborted.' >&2; exit 2; }; \
-   fi 
-else
-	 @$(MAKE) -f $(lastword $(MAKEFILE_LIST)) _need-clean-ws-or-no-untracked-files || exit; \
-	  oldVer=`json -f package.json version` || exit; \
-	  newVer=`echo "$(VER)" | sed 's/^v//'`; \
-	  if printf "$$newVer" | grep -q '^[0-9]'; then \
-	    semver "$$newVer" >/dev/null || { echo 'Invalid semver version number specified: $(VER)' >&2; exit 2; }; \
-	    [[ "$(FORCE)" != '1' ]] && { semver -r "> $$oldVer" "$$newVer" >/dev/null || { echo "Invalid version number specified: $(VER) - must be HIGHER than $$oldVer." >&2; exit 2; }; } \
-	  else \
-	    newVer=`semver -i "$$newVer" "$$oldVer"` || { echo 'Invalid version-increment specifier: $(VER)' >&2; exit 2; } \
+	@[[ '$(MAKECMDGOALS)' == *verinfo* ]] && infoOnly=1 || infoOnly=0; \
+	 gitTagVer=`git describe --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo '(none)'` || exit; gitTagVer=$${gitTagVer#v}; \
+	 pkgVer=`json -f package.json version` || exit; \
+	 if [[ -z $$VER ]]; then \
+	  printf 'CURRENT version:\n\t%s (package.json)\n\t%s (git tag)\n' "$$pkgVer" "$$gitTagVer"; \
+	  (( infoOnly )) && exit; \
+	  [[ $$pkgVer != "$$gitTagVer" && $$pkgVer != '0.0.0' ]] && { alreadyBumped=1 || alreadyBumped=0; }; \
+	  if [[ '$(MAKECMDGOALS)' == 'release' && $$alreadyBumped -eq 1 ]]; then \
+	    printf "=== `[[ $$pkgVer == *-* ]] && printf 'PRE-'`RELEASING:\n\t%s -> **%s** \n===\n" "$$gitTagVer" "$$pkgVer"; \
+	    read -p '(Y)es or (c)hange (y/c/N)?: ' -re response && [[ "$$response" == [yYcC] ]] || { echo 'Aborted.' >&2; exit 2; }; \
+	    [[ $$response =~ [yY] ]] && exit 0; \
+	    alreadyBumped=0; \
 	  fi; \
-	  printf "=== About to BUMP VERSION:\n\t$$oldVer -> **$$newVer**\n===\nProceed (y/N)?: " && read -re response && [[ "$$response" =~ [yY] ]] || { echo 'Aborted.' >&2; exit 2; };  \
-	  for dir in ./bin ./lib; do [[ -d $$dir ]] && { replace --quiet --recursive "v$${oldVer//./\\.}" "v$${newVer}" "$$dir" || exit; }; done; \
-	  [[ `json -f package.json version` == $$newVer ]] || { npm version $$newVer --no-git-tag-version >/dev/null && printf $$'\e[0;33m%s\e[0m\n' 'package.json' || exit; }; \
-	  fgrep -q "v$$newVer" CHANGELOG.md || { { sed -n '1,/^<!--/p' CHANGELOG.md && printf %s $$'\n* **v'"$$newVer"$$'** ('"`date +'%Y-%m-%d'`"$$'):\n  * ???\n' && sed -n '1,/^<!--/d; p' CHANGELOG.md; } > CHANGELOG.tmp.md && mv CHANGELOG.tmp.md CHANGELOG.md; }; \
-	  git add --update . || exit; \
-	  printf -- "-- Version bumped to v$$newVer in source files and package.json (only just-now updated files were printed above, if any).\n   Describe changes in CHANGELOG.md ('make release' will prompt for it).\n   To update the read-me file, run 'make update-readme' (also happens during 'make release').\n"
-endif	
+	  if [[ '$(MAKECMDGOALS)' == 'version' || $$alreadyBumped -eq 0 ]]; then \
+	    echo "==="; \
+	    echo "Enter new version number in full or as one of: 'patch', 'minor', 'major', optionally prefixed with 'pre', or 'prerelease'."; \
+	    echo "(Alternatively, pass a value from the command line with 'VER=<new-ver>'.)"; \
+	    read -p "NEW VERSION number (just Enter to abort)?: " -re VER && { [[ -z $$VER ]] && echo 'Aborted.' >&2 && exit 2; }; \
+	  fi; \
+	fi; \
+  oldVer=$$pkgVer; \
+  newVer=$${VER#v}; \
+  if printf "$$newVer" | grep -q '^[0-9]'; then \
+    semver "$$newVer" >/dev/null || { echo "Invalid semver version number specified: $$VER" >&2; exit 2; }; \
+    [[ "$(FORCE)" != '1' ]] && { semver -r "> $$oldVer" "$$newVer" >/dev/null || { echo "Invalid version number specified: $$VER - must be HIGHER than $$oldVer. To force this change, use FORCE=1 on the command line." >&2; exit 2; }; } \
+  else \
+    [[ $$newVer =~ ^(patch|minor|major|prepatch|preminor|premajor|prerelease)$$ ]] && newVer=`semver -i "$$newVer" "$$oldVer"` || { echo "Invalid version-increment specifier: $$VER" >&2; exit 2; } \
+  fi; \
+  printf "=== About to BUMP VERSION:\n\t$$oldVer -> **$$newVer**\n===\nProceed (y/N)?: " && read -re response && [[ "$$response" = [yY] ]] || { echo 'Aborted.' >&2; exit 2; };  \
+  for dir in ./bin ./lib; do [[ -d $$dir ]] && { replace --quiet --recursive "v$${oldVer//./\\.}" "v$${newVer}" "$$dir" || exit; }; done; \
+  [[ `json -f package.json version` == "$$newVer" ]] || { npm version $$newVer --no-git-tag-version >/dev/null && printf $$'\e[0;33m%s\e[0m\n' 'package.json' || exit; }; \
+  [[ $$gitTagVer == '(none)' ]] && newVerMdSnippet="**v$$newVer**" || newVerMdSnippet="**[v$$newVer](`json -f package.json repository.url | sed 's/.git$$//'`/compare/v$$gitTagVer...v$$newVer)**"; \
+  grep -Eq "\bv$${newVer//./\.}[^[:digit:]-]" CHANGELOG.md || { { sed -n '1,/^<!--/p' CHANGELOG.md && printf %s $$'\n* '"$$newVerMdSnippet"$$' ('"`date +'%Y-%m-%d'`"$$'):\n  * ???\n' && sed -n '1,/^<!--/d; p' CHANGELOG.md; } > CHANGELOG.tmp.md && mv CHANGELOG.tmp.md CHANGELOG.md; }; \
+  printf -- "-- Version bumped to v$$newVer in source files and package.json (only just-now updated files were printed above, if any).\n   Describe changes in CHANGELOG.md ('make release' will prompt for it).\n   To update the read-me file, run 'make update-readme' (also happens during 'make release').\n"
 
 # make release [VER=<newVerSpec>] [NOTEST=1]
 # Increments the version number, runs tests, then commits and tags, pushes to origin, prompts to publish to the npm-registry; NOTEST=1 skips tests.
 # VER=<newVerSpec> is mandatory, unless the version number in package.json is ahead of the latest Git version tag.
 .PHONY: release
-release: _need-ver _need-origin _need-npm-credentials _need-master-branch version test
-	@newVer=`json -f package.json version` || exit; \
+release: _need-origin _need-npm-credentials _need-master-branch _need-clean-ws-or-no-untracked-files version test
+	@newVer=`json -f package.json version` || exit; [[ $$newVer == *-* ]] && isPreRelease=1 || isPreRelease=0; \
 	 echo '-- Opening changelog...'; \
 	 $(EDITOR) CHANGELOG.md; \
-	 { fgrep -q "v$$newVer" CHANGELOG.md && ! fgrep -q '???' CHANGELOG.md; } || { echo "ABORTED: No changelog entries provided for new version v$$newVer." >&2; exit 2; }; \
+	 { grep -Eq "\bv$${newVer//./\.}[^[:digit:]-]" CHANGELOG.md && ! grep -E '(^|[[:blank:]])\?\?\?([[:blank:]]|$$)' CHANGELOG.md; } || { echo "ABORTED: No changelog entries provided for new version v$$newVer." >&2; exit 2; }; \
 	 commitMsg="v$$newVer"$$'\n'"`sed -n '/\*\*'"v$$newVer"'\*\*/,/^\* /p' CHANGELOG.md | sed '1d;$$d'`"; \
+	 echo "-- Updating README.md..."; \
 	 $(MAKE) -f $(lastword $(MAKEFILE_LIST)) update-license-year update-readme || exit; \
-	 git add --update . || exit; \
+	 echo '-- Opening README.md for final inspection...'; \
+	 $(EDITOR) README.md; \
+	 grep -E '(^|[[:blank:]])\?\?\?([[:blank:]]|$$)' README.md && { echo "ABORTED: README.md still contains '???', the placeholder for missing information." >&2; exit 2; }; \
+	 read -re -p "Ready to COMMIT, TAG, PUSH$$([[ `json -f package.json private` != 'true' ]] && echo ", and PUBLISH (prompted for separately)") (y/N)?: " response && [[ "$$response" =~ [yY] ]] || { echo 'Aborted.' >&2; exit 2; }; \
 	 echo '-- Committing...'; \
+	 git add --update . || exit; \
 	 [[ -z $$(git status --porcelain || echo no) ]] && echo "-- (Nothing to commit.)" || { git commit -m "$$commitMsg" || exit; echo "-- v$$newVer committed."; }; \
-	 git tag -f -a -m "$$commitMsg" "v$$newVer" || exit; { git tag -f 'stable' || exit; }; \
+	 git tag -f -a -m "$$commitMsg" "v$$newVer" || exit; { git tag -f "`(( isPreRelease )) && printf 'pre' || printf 'stable'`" || exit; }; \
 	 echo "-- Tag v$$newVer created."; \
 	 git push origin master || exit; git push -f origin master --tags; \
 	 echo "-- v$$newVer pushed to origin."; \
 	 if [[ `json -f package.json private` != 'true' ]]; then \
-	 		printf "=== About to PUBLISH TO npm REGISTRY as:\n\t**`json -f package.json name`@$$newVer**\n===\nType 'publish' to proceed; anything else to abort: " && read -er response; \
-	 		[[ "$$response" == 'publish' ]] || { echo 'Aborted.' >&2; exit 2; };  \
-	 		npm publish || exit; \
-	 		echo "-- Published to npm."; \
+	 		latestPreReleaseTag='pre'; \
+	 		printf "=== About to PUBLISH TO npm REGISTRY as `(( isPreRelease )) && printf 'PRE-RELEASE' || printf 'LATEST'` version:\n\t**`json -f package.json name`@$$newVer**\n===\nType 'publish' to proceed; anything else to abort: " && read -er response; \
+	 		[[ "$$response" == 'publish' ]] || { echo 'Aborted. Run `npm publish` on demand.' >&2; exit 2; };  \
+	 		{ (( isPreRelease )) && npm publish --tag "$$latestPreReleaseTag" || npm publish; } || exit; \
+	 		echo "-- Published to npm`(( isPreRelease )) && printf " and tagged with '$$latestPreReleaseTag' to mark the latest pre-release"`."; \
 	 else \
 	 		echo "-- (Package marked as private; not publishing to npm registry.)"; \
 	 fi; \
@@ -120,7 +163,8 @@ release: _need-ver _need-origin _need-npm-credentials _need-master-branch versio
 #  - Finally, places an auto-generated TOC at the top, if configured.
 .PHONY: update-readme
 update-readme: _update-readme-usage _update-readme-license _update-readme-dependencies _update-readme-changelog update-toc
-	@echo "-- README.md updated."
+	@[[ '$(MAKECMDGOALS)' == 'update-readme' ]] && grep -E '(^|[[:blank:]])\?\?\?([[:blank:]]|$$)' README.md && echo "WARNING: README.md still contains '???', the placeholder for missing information." >&2; \
+	 echo "-- README.md updated."
 
 # Updates the TOC in README.md - there is *generally* no need to call this *directly*, because the TOC is updated as part of the 'release' target.
 # However, when *toggling* the inclusion of a TOC, this target is called *directly* to:
@@ -133,7 +177,7 @@ update-toc:
 	   doctoc --title $$'\n'"`json -f package.json net_same2u.make_pkg.tocTitle`" README.md >/dev/null || exit; \
 	   [[ '$(MAKECMDGOALS)' == 'update-toc' ]] && echo "TOC in README.md updated." || :; \
 	 elif [[ '$(MAKECMDGOALS)' == 'update-toc' ]]; then \
-	   replace --count --multiline=false '<!-- START doctoc.[^>]*-->[\s\S]*?<!-- END doctoc[^>]*-->\n*' '' README.md | fgrep -q ' (1)' && \
+	   replace --count --multiline=false '<!-- START doctoc.[^>]*-->[\s\S]*?<!-- END doctoc[^>]*-->\n*' '' README.md | grep -Fq ' (1)' && \
 	     echo "TOC removed from README.md." || \
 	     echo "WARNING: Tried to remove TOC from README.md, but found none." >&2; \
 	 fi
@@ -182,7 +226,7 @@ _update-readme-usage:
 	 newText="$${CLI_HELP_CMD_DISPLAY[@]}"$$'\n\n'"$$( "$${CLI_HELP_CMD[@]}" )" || { echo "Failed to update read-me chapter: usage: invoking CLI help failed: $${CLI_HELP_CMD[@]}" >&2; exit 1; }; \
 	 newText="$${newText//\$$/$$\$$}"; \
 	 newText="$${newText//~/\~}"; \
-	 replace --count --quiet --multiline=false '(\n)(<!-- DO NOT EDIT .*usage.*?-->\n\s*?\n```\n\$$ )[\s\S]*?(\n```\n|$$)' '$$1$$2'"$$newText"'$$3' README.md | fgrep -q ' (1)' || { echo "Failed to update read-me chapter: usage." >&2; exit 1; }
+	 replace --count --quiet --multiline=false '(\n)(<!-- DO NOT EDIT .*usage.*?-->\n\s*?\n```\n\$$ )[\s\S]*?(\n```\n|$$)' '$$1$$2'"$$newText"'$$3' README.md | grep -Fq ' (1)' || { echo "Failed to update read-me chapter: usage." >&2; exit 1; }
 # !! REGRETTABLY, the ``` sequences in the line above break syntax coloring for the rest of the file in Sublime Text 3 - ?? unclear, how to work around that.
 
 #  - Replaces the '## License' chapter with the contents of LICENSE.md
@@ -191,7 +235,7 @@ _update-readme-usage:
 _update-readme-license:
 	@newText=$$'\n'"$$(< LICENSE.md)"$$'\n'; \
 	 newText="$${newText//\$$/$$\$$}"; \
-	 replace --count --quiet --multiline=false '(^|\n)(#+ License\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | fgrep -q ' (1)' || { echo "Failed to update read-me chapter: license." >&2; exit 1; }
+	 replace --count --quiet --multiline=false '(^|\n)(#+ License\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | grep -Fq ' (1)' || { echo "Failed to update read-me chapter: license." >&2; exit 1; }
 
 #  - Replaces the dependencies chapter with the current list of dependencies.
 .PHONY: _update-readme-dependencies
@@ -214,7 +258,7 @@ _update-readme-dependencies:
 	 done)$$'\n'; \
 	 [[ -n $$newText ]] || { echo "Failed to determine npm dependencies." >&2; exit 1; }; \
 	 newText="$${newText//\$$/$$\$$}"; \
-	 replace --count --quiet --multiline=false '(^|\n)($(README_HEADING_DEPENDENCIES)\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | fgrep -q ' (1)' || { echo "Failed to update read-me chapter: npm dependencies." >&2; exit 1; }
+	 replace --count --quiet --multiline=false '(^|\n)($(README_HEADING_DEPENDENCIES)\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | grep -Fq ' (1)' || { echo "Failed to update read-me chapter: npm dependencies." >&2; exit 1; }
 
 #  - Replaces the changelog chapter with the contents of CHANGELOG.md
 .PHONY: _update-readme-changelog
@@ -224,7 +268,7 @@ README_HEADING_CHANGELOG := \#+ Changelog
 _update-readme-changelog:
 	@newText=$$'\n'"$$(tail -n +3 CHANGELOG.md)"$$'\n'; \
 	 newText="$${newText//\$$/$$\$$}"; \
-	 replace --count --quiet --multiline=false '(^|\n)($(README_HEADING_CHANGELOG)\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | fgrep -q ' (1)' || { echo "Failed to update read-me chapter: changelog." >&2; exit 1; }
+	 replace --count --quiet --multiline=false '(^|\n)($(README_HEADING_CHANGELOG)\n)[\s\S]*?(\n([ \t]*<!-- .*? -->\s*?\n)?#|$$)' '$$1$$2'"$$newText"'$$3' README.md | grep -Fq ' (1)' || { echo "Failed to update read-me chapter: changelog." >&2; exit 1; }
 
 .PHONY: _need-master-branch
 _need-master-branch:
@@ -236,23 +280,13 @@ _need-clean-ws-or-no-untracked-files:
 	@git add --update . || exit
 	@[[ -z $$(git status --porcelain | awk -F'\0' '$$2 != " " { print $$2 }') ]] || { echo "Workspace must either be clean or contain no untracked files; please add untracked files to the index first (e.g., \`git add .\`) or delete them." >&2; exit 2; }
 
-# Ensures that the either an explicit new VER (version) number was specified or that is implied by 'package.json' already containing
-# a higher version number than the highest Git version tag.
-.PHONY: _need-ver
-_need-ver:
-ifndef VER
-ifneq ($(FORCE),1)
-		@[[ 'v'`json -f package.json version` != `git describe --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null` ]] || { printf 'ERROR: Since the version number in 'package.json' is the same as the latest Git version tag, Variable 'VER' must be defined to specify the NEW version number.\nUse `make version` for more information and to see the current version numbers, or pass FORCE=1 to force the operation nonetheless.\n' >&2; exit 1; }
-endif	
-endif
-
 # Ensure that a remote git repo named 'origin' is defined.
 .PHONY: _need-origin
 _need-origin:
-	@git remote | fgrep -qx 'origin' || { echo "ERROR: Remote git repo 'origin' must be defined." >&2; exit 2; }
+	@git remote | grep -Fqx 'origin' || { echo "ERROR: Remote git repo 'origin' must be defined." >&2; exit 2; }
 
 # Unless the package is marked private, ensure that npm credentials have been saved.
 .PHONY: _need-npm-credentials
 _need-npm-credentials:
 	@[[ `json -f package.json private` == 'true' ]] && exit 0; \
-	 egrep -q '^//registry.npmjs.org/:_password' ~/.npmrc || { echo "ERROR: npm-registry credentials not found. Please log in with 'npm login' in order to enable publishing." >&2; exit 2; }; \
+	 grep -Eq '^//registry.npmjs.org/:_password' ~/.npmrc || { echo "ERROR: npm-registry credentials not found. Please log in with 'npm login' in order to enable publishing." >&2; exit 2; }; \

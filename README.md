@@ -1,4 +1,4 @@
-[![npm version](https://badge.fury.io/js/ttab.svg)](http://badge.fury.io/js/ttab)
+[![npm version](https://img.shields.io/npm/v/ttab.svg)](https://npmjs.com/package/ttab) [![license](https://img.shields.io/npm/l/ttab.svg)](https://github.com/mklement0/ttab/blob/master/LICENSE.md)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -185,6 +185,10 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.1.7](https://github.com/mklement0/ttab/compare/v0.1.6...v0.1.7)** (2015-06-26):
+  * [doc] Read-me: npm badge changed to shields.io; license badge added.
+  * [dev] Makefile updated.
 
 * **v0.1.6** (2015-06-01):
   * [doc] Read-me improvements; typo in CLI usage help fixed.

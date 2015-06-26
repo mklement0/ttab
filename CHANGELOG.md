@@ -4,6 +4,10 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.1.7](https://github.com/mklement0/ttab/compare/v0.1.6...v0.1.7)** (2015-06-26):
+  * [doc] Read-me: npm badge changed to shields.io; license badge added.
+  * [dev] Makefile updated.
+
 * **v0.1.6** (2015-06-01):
   * [doc] Read-me improvements; typo in CLI usage help fixed.
 
