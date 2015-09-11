@@ -29,7 +29,7 @@ An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new ter
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
 
-## From the npm registry
+## Installation from the npm registry
 
 With [Node.js](http://nodejs.org/) or [io.js](https://iojs.org/) installed, install from the [npm registry](https://www.npmjs.com/package/ttab):
 
@@ -44,7 +44,7 @@ With [Node.js](http://nodejs.org/) or [io.js](https://iojs.org/) installed, inst
 
 * Download [this `bash` script](https://raw.githubusercontent.com/mklement0/ttab/stable/bin/ttab) as `ttab`.
 * Make it executable with `chmod +x ttab`.
-* Move it to a folder in your `$PATH`, such as `/usr/local/bin`
+* Move it to a folder in your `$PATH`, such as `/usr/local/bin`.
 
 # Examples
 
@@ -53,7 +53,7 @@ With [Node.js](http://nodejs.org/) or [io.js](https://iojs.org/) installed, inst
 ttab
 
 # Open a new tab in a new terminal window.
-ttab -n 
+ttab -w 
 
 # Open a new tab and execute the specified command.
 ttab ls -l "$HOME/Library/Application Support"
@@ -78,7 +78,7 @@ ttab eval "ls \$HOME/Library/Application\ Support; echo Press a key to exit.; re
 
 <!-- DO NOT EDIT THE FENCED CODE BLOCK and RETAIN THIS COMMENT: The fenced code block below is updated by `make update-readme/release` with CLI usage information. -->
 
-```
+```nohighlight
 $ ttab --help
 
 
@@ -87,7 +87,7 @@ SYNOPSIS:
 
 DESCRIPTION:
   Opens a new Terminal.app tab and optionally executes a
-  command and assigns settings,     among other options.
+  command and assigns settings, among other options.
 
   IMPORTANT: *Terminal.app must be allowed assistive access* in order for this
   utility to work, which requires one-time authorization with administrative
@@ -185,6 +185,10 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.1.8](https://github.com/mklement0/ttab/compare/v0.1.7...v0.1.8)** (2015-09-11):
+  * [doc] Incorrect new-window option corrected in examples.
+  * [doc, dev] Read-me improved together with the Makefile to turn off syntax highlighting for the CLI help chapter.
 
 * **[v0.1.7](https://github.com/mklement0/ttab/compare/v0.1.6...v0.1.7)** (2015-06-26):
   * [doc] Read-me: npm badge changed to shields.io; license badge added.
