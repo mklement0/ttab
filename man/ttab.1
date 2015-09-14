@@ -1,0 +1,184 @@
+.TH "TTAB" "1" "September 2015" "v0.2.0" ""
+.SH "NAME"
+\fBttab\fR \- open a new Terminal\.app tab or window
+.SH SYNOPSIS
+.P
+ Opens a new terminal tab or window in OS X's Terminal\.app application\.
+.P
+.RS 2
+.nf
+ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\.\.]]
+
+\-w                  open new tab in new terminal window
+\-s <settings>       assign a Terminal\.app settings set (profile)
+\-t <title>          specify title for new tab
+\-g                  create tab in background (do not activate Terminal\.app)
+\-G                  create tab in background and do not activate new tab
+\-d <dir>            specify working directory
+<cmd> [<arg>\.\.\.]    command to execute in the new tab
+.fi
+.RE
+.P
+ Standard options: \fB\-\-help\fP, \fB\-\-man\fP, \fB\-\-version\fP, \fB\-\-home\fP
+.SH DESCRIPTION
+.P
+ \fBttab\fP opens a new Terminal\.app tab with a variety of options, including
+.br
+ executing a command in the new tab, assigning a title and working directory,
+.br
+ and opening the tab in a new window\.
+.P
+ IMPORTANT: \fBTerminal\.app must be allowed assistive access\fR in order for this
+.br
+ utility to work, which requires one\-time authorization with administrative
+.br
+ privileges\. If you get error messages instead of being prompted, authorize
+.br
+ Terminal\.app via System Preferences > Security & Privacy > Privacy >
+.br
+ Accessibility\.
+.P
+ The new tab will run a login shell (i\.e\., load the user's shell profile)
+.br
+ and by default inherit the working directory from the parent shell\.
+.P
+ When specifying a command to execute in the new tab, quoted parameters are
+.br
+ handled properly and there's no need to quote the command as a whole,
+.br
+ provided it is a \fIsingle\fR command\.
+.br
+ Prefix such a single command with \fBexec\fP to exit the shell after the command
+.br
+ terminates\. If the tab's settings are configured to close tabs on termination
+.br
+ of the shell, the tab will close automatically\.
+.P
+ To specify \fImultiple\fR commands, use \fBeval\fP followed by a single, quoted
+.br
+ string containing the entire shell command line to execute; in the simplest
+.br
+ case, enclose the string in single\-quotes and use ';' to separate commands\.
+.br
+ Use \fBexit\fP as the last command to automatically close the tab when the
+.br
+ command terminates, assuming the tab's settings are configured to close the
+.br
+ tab on termination of the shell\.
+.br
+ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
+.SH OPTIONS
+.RS 0
+.IP \(bu 2
+\fB\-w\fP
+.br
+ creates the new tab in a new window rather than in Terminal's front
+.br
+ window\.
+.IP \(bu 2
+\fB\-s <settings>\fP
+.br
+ specifies the settings (profiles) to apply to the new tab, as
+.br
+ defined in Terminal\.app's Preferences > Profiles, such as 'Grass';
+.br
+ settings determine the appearance and behavior of the new tab; name
+.br
+ matching is case\-insensitive\.
+.IP \(bu 2
+\fB\-t <title>\fP
+.br
+ specifies a custom title to assign to the new tab; otherwise, if a
+.br
+ command is specified, its first token will become the new tab's title\.
+.IP \(bu 2
+\fB\-d <dir>\fP
+.br
+ explicitly specifies a working directory for the new tab; by default, the
+.br
+ invoking shell's working directory is inherited (even if \fB\-w\fP is also
+.br
+ specified)\.
+.IP \(bu 2
+\fB\-g\fP
+.br
+ (back\fIg\fRround) causes Terminal not to activate, if it isn't the frontmost
+.br
+ application); within Terminal, however, the new tab will become active
+.br
+ active tab; useful in scripts that launch other applications and
+.br
+ don't want Terminal to steal focus later\.
+.IP \(bu 2
+\fB\-G\fP
+.br
+ causes Terminal not to activate \fIand\fR the active element within Terminal
+.br
+ not to change; i\.e\., the active window and tab stay the same\. If Terminal
+.br
+ happens to be frontmost, the new tab will effectively open in the
+.br
+ background\.
+
+.RE
+.P
+ NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal / the new
+.br
+       tab will still activate \fIbriefly, temporarily\fR in most scenarios\.
+.SH STANDARD OPTIONS
+.P
+ All standard options provide information only\.
+.RS 0
+.IP \(bu 2
+\fB\-h, \-\-help\fP
+.br
+ Prints the contents of the synopsis chapter to stdout for quick reference\.
+.IP \(bu 2
+\fB\-\-man\fP
+.br
+ Displays this manual page, which is a helpful alternative to using \fBman\fP, 
+ if the manual page isn't installed\.
+.IP \(bu 2
+\fB\-\-version\fP
+.br
+ Prints version information\.
+.IP \(bu 2
+\fB\-\-home\fP
+.br
+ Opens this utility's home page in the system's default web browser\.
+
+.RE
+.SH LICENSE
+.P
+ For license information and more, visit this utility's home page by running
+.br
+ \fBttab \-\-home\fP\|\.
+.SH EXAMPLES
+.P
+.RS 2
+.nf
+# Open new tab in current terminal window:
+ttab
+
+# Open new tab in new terminal window:
+ttab \-w
+
+# Open new tab with title 'Green' using settings 'Grass':
+ttab \-t Green \-s Grass  
+
+# Open new tab and execute a command in it:
+ttab ls \-l "$HOME/Library/Application Support"
+
+# Open new tab with specified working dir\. and execute a command in it:
+ttab \-d "$HOME/Library/Application Support" ls \-l
+
+# Execute a command and exit\.
+# If configured via settings, also close the tab\.
+ttab exec /path/to/someprogram arg1 arg2
+
+# Pass a multi\-command string via 'eval', wait for a keystroke, then exit\.
+ttab eval 'ls "$HOME/Library/Application Support";
+                            echo Press any key to exit; read \-rsn 1; exit'
+.fi
+.RE
+

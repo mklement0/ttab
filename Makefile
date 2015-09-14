@@ -131,6 +131,8 @@ release: _need-origin _need-npm-credentials _need-master-branch _need-clean-ws-o
 	 $(EDITOR) CHANGELOG.md; \
 	 { grep -Eq "\bv$${newVer//./\.}[^[:digit:]-]" CHANGELOG.md && ! grep -E '(^|[[:blank:]])\?\?\?([[:blank:]]|$$)' CHANGELOG.md; } || { echo "ABORTED: No changelog entries provided for new version v$$newVer." >&2; exit 2; }; \
 	 commitMsg="v$$newVer"$$'\n'"`sed -n '/\*\*'"v$$newVer"'\*\*/,/^\* /p' CHANGELOG.md | sed '1d;$$d'`"; \
+	 echo "-- Updating documentation..."; \
+	 $(MAKE) -f $(lastword $(MAKEFILE_LIST)) update-doc || exit; \
 	 echo "-- Updating README.md..."; \
 	 $(MAKE) -f $(lastword $(MAKEFILE_LIST)) update-license-year update-readme || exit; \
 	 echo '-- Opening README.md for final inspection...'; \
@@ -205,6 +207,16 @@ update-license-year:
    elif [[ '$(MAKECMDGOALS)' == 'update-license-year' ]]; then \
    	 echo "('$$f' calendar year(s) are up-to-date: $$yearRange)"; \
    fi
+
+
+.PHONY: update-doc
+update-doc:
+	@read -r cliName cliPath < <(json -f package.json bin | json -Ma key value | head -n 1) || exit 0; \
+	 ver='v'$$(json -f package.json version) || exit; \
+	 mkdir -p doc man; \
+	 "$$cliPath" --man-embedded > doc/"$$cliName".md || exit; \
+	 "$$cliPath" --man-embedded | marked-man --version "$$ver" > man/"$$cliName".1 || exit
+
 
 # --------- Aux. targets
 

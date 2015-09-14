@@ -7,7 +7,7 @@
 
 - [ttab &mdash; Introduction](#ttab-&mdash-introduction)
 - [Installation](#installation)
-  - [From the npm registry](#from-the-npm-registry)
+  - [Installation from the npm registry](#installation-from-the-npm-registry)
   - [Manual installation](#manual-installation)
 - [Examples](#examples)
 - [Usage](#usage)
@@ -55,104 +55,48 @@ ttab
 # Open a new tab in a new terminal window.
 ttab -w 
 
-# Open a new tab and execute the specified command.
+# Open a new tab and execute the specified command before showing the prompt.
 ttab ls -l "$HOME/Library/Application Support"
 
-# Open a new tab, switch to the specified dir., then execute the specified command.
+# Open a new tab, switch to the specified dir., then execute the specified 
+# command before showing the prompt.
 ttab -d ~/Library/Application\ Support ls -1 
 
-# Open a new tab with title 'How Green Was My Valley' and settings 'Grass'
+# Open a new tab with title 'How Green Was My Valley' and settings 'Grass'.
 ttab -t 'How Green Was My Valley' -s Grass
 
-# Open a new tab and execute the specified script.
+# Open a new tab and execute the specified script before showing the prompt.
 ttab /path/to/someScript 
 
-# Open a new tab, execute the specified script, then close the tab on termination.
+# Open a new tab, execute the specified script, and exit.
 ttab exec /path/to/someScript
 
-# Open a new tab, execute a command, wait for a keypress, then close the tab.
-ttab eval "ls \$HOME/Library/Application\ Support; echo Press a key to exit.; read -s -n 1; exit"
+# Open a new tab, execute a command, wait for a keypress, and exit.
+ttab eval 'ls "$HOME/Library/Application Support"; echo Press a key to exit.; read -rsn 1; exit'
 ```
 
 # Usage
+
+Find concise usage information below; for complete documentation, read the [manual online](doc/ttab.md), or, once installed, run `man ttab` (`ttab --man` if installed manually).
 
 <!-- DO NOT EDIT THE FENCED CODE BLOCK and RETAIN THIS COMMENT: The fenced code block below is updated by `make update-readme/release` with CLI usage information. -->
 
 ```nohighlight
 $ ttab --help
 
+ Opens a new terminal tab or window in OS X's Terminal.app application.
 
-SYNOPSIS:
-  ttab [-w] [-s settings] [-t title] [-g|-G] [-d dir] [command [param1 ...]]
+    ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
-DESCRIPTION:
-  Opens a new Terminal.app tab and optionally executes a
-  command and assigns settings, among other options.
+    -w                  open new tab in new terminal window
+    -s <settings>       assign a Terminal.app settings set (profile)
+    -t <title>          specify title for new tab
+    -g                  create tab in background (do not activate Terminal.app)
+    -G                  create tab in background and do not activate new tab
+    -d <dir>            specify working directory
+    <cmd> [<arg>...]    command to execute in the new tab
 
-  IMPORTANT: *Terminal.app must be allowed assistive access* in order for this
-  utility to work, which requires one-time authorization with administrative
-  privileges. If you get error messages instead of being prompted, authorize
-  Terminal.app via System Preferences > Security & Privacy > Privacy >
-  Accessibility.
-
-  The new tab will run a login shell (i.e., load the user's shell profile)
-  and by default inherit the working directory from the parent shell.
-
-  -w
-    creates the new tab in a new window rather than in Terminal's front
-    window.
-  -s
-    specifies the settings (profiles) to apply to the new tab, as
-    defined in Terminal.app's Preferences > Profiles, such as 'Grass';
-    settings determine the appearance and behavior of the new tab; name
-    matching is case-insensitive.
-  -t 
-    specifies a custom title to assign to the new tab; otherwise, if a 
-    command is specified, its first token will become the new tab's title.
-  -d
-    explicitly specifies a working directory for the new tab; by default, the
-    invoking shell's working directory is inherited (even if -w is also
-    specified).
-  -g
-    (back*g*round) causes Terminal not to activate, if it isn't the frontmost
-    application); within Terminal, however, the new tab will become active
-    active tab; useful in scripts that launch other applications and
-    don't want Terminal to steal focus later.
-  -G
-    causes Terminal not to activate *and* the active element within Terminal
-    not to change; i.e., the active window and tab stay the same. If Terminal
-    happens to be fronmost, the new tab will effectively open in the
-    background.
-
-  NOTE: With -g or -G specified, for technical reasons, Terminal / the new
-        tab will still activate *briefly, temporarily* in most scenarios.
-
-  Quoted parameters are handled properly and there's no need to quote the
-  command as a whole, provided it is a *single* command.
-  Prefix such a single command with 'exec' to automatically close the tab
-  when the command terminates, assuming the tab's settings are configured to
-  close the tab on termination of the shell.
-
-  To specify *multiple* commands, use 'eval' followed by a single,
-  *double*-quoted string in which the commands are separated by ';' Do NOT
-  use backslash-escaped double quotes *inside this string*; rather, use
-  *single-character backslash-escaping* as needed. Use 'exit' as the last
-  command to automatically close the tab when the command terminates,
-  assuming the tab's settings are configured to close the tab on termination
-  of the shell.
-  Precede 'exit' with 'read -s -n 1' to wait for a keystroke first.
-
-EXAMPLES:
-  # Create new tab with title 'Green' using settings 'Grass'
-  ttab -t Green -s Grass  
-  ttab ls -l "$HOME/Library/Application Support"
-  ttab -d "$HOME/Library/Application Support" ls -1
-  ttab /path/to/someScript arg1 arg2
-  # Execute a script and close the tab on termination (settings permitting).
-  ttab exec /path/to/someScript arg1 arg2
-  # Pass a multi-command string via 'eval', wait for keystroke, then exit.
-  ttab eval "ls \$HOME/Library/Application\ Support; 
-                    echo Press a key to exit.; read -s -n 1; exit"
+ Standard options: --help, --man, --version, --home
 ```
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'LICENSE.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
@@ -173,6 +117,7 @@ This project gratefully depends on the following open-source components, accordi
 
 * [doctoc (D)](https://github.com/thlorenz/doctoc)
 * [json (D)](https://github.com/trentm/json)
+* [marked-man (D)](https://github.com/kapouer/marked-man#readme)
 * [replace (D)](https://github.com/harthur/replace)
 * [semver (D)](https://github.com/npm/node-semver#readme)
 * [tap (D)](https://github.com/isaacs/node-tap)
@@ -185,6 +130,11 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.2.0](https://github.com/mklement0/ttab/compare/v0.1.8...v0.2.0)** (2015-09-14):
+  * [enhancement] You can now use embedded (escaped, if necessary) double-quotes inside a multi-command string passed via `eval`.
+  * [doc] If installed via the npm registry, a man page is now installed (view with `man ttab`); if installed manually, `ttab --man`
+    shows a plain-text version. `ttab -h` now only prints concise, single-page usage information.
 
 * **[v0.1.8](https://github.com/mklement0/ttab/compare/v0.1.7...v0.1.8)** (2015-09-11):
   * [doc] Incorrect new-window option corrected in examples.
