@@ -1,9 +1,9 @@
-.TH "TTAB" "1" "September 2015" "v0.2.0" ""
+.TH "TTAB" "1" "September 2015" "v0.2.1" ""
 .SH "NAME"
 \fBttab\fR \- open a new Terminal\.app tab or window
 .SH SYNOPSIS
 .P
- Opens a new terminal tab or window in OS X's Terminal\.app application\.
+Opens a new terminal tab or window in OS X's Terminal\.app application\.
 .P
 .RS 2
 .nf
@@ -19,54 +19,54 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 .fi
 .RE
 .P
- Standard options: \fB\-\-help\fP, \fB\-\-man\fP, \fB\-\-version\fP, \fB\-\-home\fP
+Standard options: \fB\-\-help\fP, \fB\-\-man\fP, \fB\-\-version\fP, \fB\-\-home\fP
 .SH DESCRIPTION
 .P
- \fBttab\fP opens a new Terminal\.app tab with a variety of options, including
+\fBttab\fP opens a new Terminal\.app tab with a variety of options, including
 .br
- executing a command in the new tab, assigning a title and working directory,
+executing a command in the new tab, assigning a title and working directory,
 .br
- and opening the tab in a new window\.
+and opening the tab in a new window\.
 .P
- IMPORTANT: \fBTerminal\.app must be allowed assistive access\fR in order for this
+IMPORTANT: \fBTerminal\.app must be allowed assistive access\fR in order for this
 .br
- utility to work, which requires one\-time authorization with administrative
+utility to work, which requires one\-time authorization with administrative
 .br
- privileges\. If you get error messages instead of being prompted, authorize
+privileges\. If you get error messages instead of being prompted, authorize
 .br
- Terminal\.app via System Preferences > Security & Privacy > Privacy >
+Terminal\.app via System Preferences > Security & Privacy > Privacy >
 .br
- Accessibility\.
+Accessibility\.
 .P
- The new tab will run a login shell (i\.e\., load the user's shell profile)
+The new tab will run a login shell (i\.e\., load the user's shell profile)
 .br
- and by default inherit the working directory from the parent shell\.
+and by default inherit the working directory from the parent shell\.
 .P
- When specifying a command to execute in the new tab, quoted parameters are
+When specifying a command to execute in the new tab, quoted parameters are
 .br
- handled properly and there's no need to quote the command as a whole,
+handled properly and there's no need to quote the command as a whole,
 .br
- provided it is a \fIsingle\fR command\.
+provided it is a \fIsingle\fR command\.
 .br
- Prefix such a single command with \fBexec\fP to exit the shell after the command
+Prefix such a single command with \fBexec\fP to exit the shell after the command
 .br
- terminates\. If the tab's settings are configured to close tabs on termination
+terminates\. If the tab's settings are configured to close tabs on termination
 .br
- of the shell, the tab will close automatically\.
+of the shell, the tab will close automatically\.
 .P
- To specify \fImultiple\fR commands, use \fBeval\fP followed by a single, quoted
+To specify \fImultiple\fR commands, use \fBeval\fP followed by a single, quoted
 .br
- string containing the entire shell command line to execute; in the simplest
+string containing the entire shell command line to execute; in the simplest
 .br
- case, enclose the string in single\-quotes and use ';' to separate commands\.
+case, enclose the string in single\-quotes and use ';' to separate commands\.
 .br
- Use \fBexit\fP as the last command to automatically close the tab when the
+Use \fBexit\fP as the last command to automatically close the tab when the
 .br
- command terminates, assuming the tab's settings are configured to close the
+command terminates, assuming the tab's settings are configured to close the
 .br
- tab on termination of the shell\.
+tab on termination of the shell\.
 .br
- Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
+Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .SH OPTIONS
 .RS 0
 .IP \(bu 2
@@ -122,12 +122,12 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 
 .RE
 .P
- NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal / the new
+NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal / the new
 .br
-       tab will still activate \fIbriefly, temporarily\fR in most scenarios\.
+      tab will still activate \fIbriefly, temporarily\fR in most scenarios\.
 .SH STANDARD OPTIONS
 .P
- All standard options provide information only\.
+All standard options provide information only\.
 .RS 0
 .IP \(bu 2
 \fB\-h, \-\-help\fP
@@ -150,9 +150,9 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 .RE
 .SH LICENSE
 .P
- For license information and more, visit this utility's home page by running
+For license information and more, visit this utility's home page by running
 .br
- \fBttab \-\-home\fP\|\.
+\fBttab \-\-home\fP\|\.
 .SH EXAMPLES
 .P
 .RS 2

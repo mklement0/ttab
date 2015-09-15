@@ -84,7 +84,7 @@ Find concise usage information below; for complete documentation, read the [manu
 ```nohighlight
 $ ttab --help
 
- Opens a new terminal tab or window in OS X's Terminal.app application.
+Opens a new terminal tab or window in OS X's Terminal.app application.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
@@ -96,7 +96,7 @@ $ ttab --help
     -d <dir>            specify working directory
     <cmd> [<arg>...]    command to execute in the new tab
 
- Standard options: --help, --man, --version, --home
+Standard options: --help, --man, --version, --home
 ```
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'LICENSE.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
@@ -130,6 +130,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.2.1](https://github.com/mklement0/ttab/compare/v0.2.0...v0.2.1)** (2015-09-15):
+  * [dev] Makefile improvements; various other behind-the-scenes tweaks.
 
 * **[v0.2.0](https://github.com/mklement0/ttab/compare/v0.1.8...v0.2.0)** (2015-09-14):
   * [enhancement] You can now use embedded (escaped, if necessary) double-quotes inside a multi-command string passed via `eval`.

@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.2.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.2.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -41,14 +41,14 @@ openManPage() {
   fi  
 }
 
-# Prints the contents of the synopsis chapter of the embedded Markdown-formatted man-page source.
+# Prints the contents of the synopsis chapter of the embedded Markdown-formatted man-page source for quick reference.
 printUsage() {
   local embeddedText
   # Extract usage information from the SYNOPSIS chapter of the embedded Markdown-formatted man-page source.
-  embeddedText=$(sed -n -e $'/^: <<\'EOF_MAN_PAGE\'/,/^EOF_MAN_PAGE/!d; /SYNOPSIS$/,/^[^ ]/{ s///; t\np; }' "$BASH_SOURCE")
+  embeddedText=$(sed -n -e $'/^: <<\'EOF_MAN_PAGE\'/,/^EOF_MAN_PAGE/!d; /^## SYNOPSIS$/,/^#/{ s///; t\np; }' "$BASH_SOURCE")
   if [[ -n $embeddedText ]]; then
     # Print extracted synopsis chapter - remove backticks for uncluttered display.
-    printf '%s\n' "$embeddedText" | tr -d '`'
+    printf '%s\n\n' "$embeddedText" | tr -d '`'
   else # No SYNOPIS chapter found; fall back to displaying the man page.
     echo "WARNING: usage information not found; opening man page instead." >&2
     openManPage
@@ -71,7 +71,7 @@ case $1 in
     # Display the manual page and exit, falling back to printing the embedded man-page source.
     openManPage; exit
     ;;
-  --man-embedded) # private option, used by `make update-doc`
+  --man-source) # private option, used by `make update-doc`
     # Print raw, embedded Markdown-formatted man-page source and exit
     printManPageSource; exit
     ;;
@@ -261,36 +261,51 @@ osascript <<<"$script"
 ####
 # MAN PAGE MARKDOWN SOURCE
 #  - Place a Markdown-formatted version of the man page for this script
-#    below the : <<'EOF_MAN_PAGE' line below.
-#  - The entire rest of this script
-#    is assumed to be the Markdown document.
-#  Markdown formatting:
-#   - Append the manual-section number directly to the CLI name in the first heading; e.g.
-#      # foo(1) - does bar
-#   - Use 1-space indentation for plain-text rendering; 4-space indentation, as usual, for code blocks.
-#   - The contents of the SYNOPSIS chapter is extracted when -h/--help is invoked.
-#     Use 4-space indentation without markup for both the syntax line and the
-#     block of brief option descriptions; represent option-arguments and operands
-#     in angle brackets; e.g., '<foo>'
-#  - To support plain-text rendering in the terminal, limit lines to 80 chars.,
-#    and, for similar rendering as HTML, *end every line with 2 trailing spaces*.
-#  - Options list:
-#    - End every list item (bullet point) itself with 2 trailing spaces so
-#      that it renders on its own line.
-#    - To associate more than 1 paragraph with a list item, use the following TRICK:
-#      To produce an empty line while still keeping the text attached to the list item,
-#      use '&nbsp;<space><space>', though note that that introduces noise in plain-text rendering.
-#    - To follow the last list item with regular paragraphs, leave *2* empty lines
-#      in between.
-#   Character-styling markup in `man` view:
-#      `...` and **...** render as bolded (red) text
-#      _..._ and *...* render as word-individually underlined text
+#    inside the here-document below.
+#    The document must be formatted to look good in all 3 viewing scenarios:
+#     - as a man page, after conversion to ROFF with marked-man
+#     - as plain text (raw Markdown source)
+#     - as HTML (rendered Markdown)
+#  Markdown formatting tips:
+#   - GENERAL
+#     To support plain-text rendering in the terminal, limit all lines to 80 chars.,
+#     and, for similar rendering as HTML, *end every line with 2 trailing spaces*.
+#   - HEADINGS
+#     - For better plain-text rendering, leave an empty line after a heading
+#       marked-man will remove it from the ROFF version.
+#     - The first heading must be a level-1 heading containing the utility
+#       name and very brief description; append the manual-section number 
+#       directly to the CLI name; e.g.:
+#         # foo(1) - does bar
+#     - The 2nd, level-2 heading must be '## SYNOPSIS' and the chapter's body
+#       must render reasonably as plain text, because it is printed to stdout
+#       when  `-h`, `--help` is specified:
+#         Use 4-space indentation without markup for both the syntax line and the
+#         block of brief option descriptions; represent option-arguments and operands
+#         in angle brackets; e.g., '<foo>'
+#     - All other headings should be level-2 headings in ALL-CAPS.
+#   - TEXT
+#      - Use NO indentation for regular chapter text; if you do, it will 
+#        be indented further than list items.
+#      - Use 4-space indentation, as usual, for code blocks.
+#      - Markup character-styling markup translates to ROFF rendering as follows:
+#         `...` and **...** render as bolded (red) text
+#         _..._ and *...* render as word-individually underlined text
+#   - LISTS
+#      - Indent list items by 2 spaces for better plain-text viewing, but note
+#        that the ROFF generated by marked-man still renders them unindented.
+#      - End every list item (bullet point) itself with 2 trailing spaces too so
+#        that it renders on its own line.
+#      - Avoid associating more than 1 paragraph with a list item, if possible,
+#        because it requires the following trick, which hampers plain-text readability:
+#        Use '&nbsp;<space><space>' in lieu of an empty line.
 ####
-: <<'EOF_MAN_PAGE' # DO NOT ALTER THIS LINE.
+: <<'EOF_MAN_PAGE'
 # ttab(1) - open a new Terminal.app tab or window
 
 ## SYNOPSIS
- Opens a new terminal tab or window in OS X's Terminal.app application.
+
+Opens a new terminal tab or window in OS X's Terminal.app application.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
@@ -302,38 +317,40 @@ osascript <<<"$script"
     -d <dir>            specify working directory
     <cmd> [<arg>...]    command to execute in the new tab
 
- Standard options: `--help`, `--man`, `--version`, `--home`
+Standard options: `--help`, `--man`, `--version`, `--home`
 
 ## DESCRIPTION
- `ttab` opens a new Terminal.app tab with a variety of options, including  
- executing a command in the new tab, assigning a title and working directory,  
- and opening the tab in a new window.
 
- IMPORTANT: **Terminal.app must be allowed assistive access** in order for this  
- utility to work, which requires one-time authorization with administrative  
- privileges. If you get error messages instead of being prompted, authorize  
- Terminal.app via System Preferences > Security & Privacy > Privacy >  
- Accessibility.
+`ttab` opens a new Terminal.app tab with a variety of options, including  
+executing a command in the new tab, assigning a title and working directory,  
+and opening the tab in a new window.
 
- The new tab will run a login shell (i.e., load the user's shell profile)  
- and by default inherit the working directory from the parent shell.
+IMPORTANT: **Terminal.app must be allowed assistive access** in order for this  
+utility to work, which requires one-time authorization with administrative  
+privileges. If you get error messages instead of being prompted, authorize  
+Terminal.app via System Preferences > Security & Privacy > Privacy >  
+Accessibility.
 
- When specifying a command to execute in the new tab, quoted parameters are  
- handled properly and there's no need to quote the command as a whole,  
- provided it is a *single* command.  
- Prefix such a single command with `exec` to exit the shell after the command  
- terminates. If the tab's settings are configured to close tabs on termination  
- of the shell, the tab will close automatically.
+The new tab will run a login shell (i.e., load the user's shell profile)  
+and by default inherit the working directory from the parent shell.
 
- To specify *multiple* commands, use `eval` followed by a single, quoted  
- string containing the entire shell command line to execute; in the simplest  
- case, enclose the string in single-quotes and use ';' to separate commands.  
- Use `exit` as the last command to automatically close the tab when the  
- command terminates, assuming the tab's settings are configured to close the  
- tab on termination of the shell.  
- Precede `exit` with `read -rsn 1` to wait for a keystroke first.
+When specifying a command to execute in the new tab, quoted parameters are  
+handled properly and there's no need to quote the command as a whole,  
+provided it is a *single* command.  
+Prefix such a single command with `exec` to exit the shell after the command  
+terminates. If the tab's settings are configured to close tabs on termination  
+of the shell, the tab will close automatically.
+
+To specify *multiple* commands, use `eval` followed by a single, quoted  
+string containing the entire shell command line to execute; in the simplest  
+case, enclose the string in single-quotes and use ';' to separate commands.  
+Use `exit` as the last command to automatically close the tab when the  
+command terminates, assuming the tab's settings are configured to close the  
+tab on termination of the shell.  
+Precede `exit` with `read -rsn 1` to wait for a keystroke first.
 
 ## OPTIONS
+
  * `-w`  
     creates the new tab in a new window rather than in Terminal's front  
     window.
@@ -365,12 +382,12 @@ osascript <<<"$script"
     happens to be frontmost, the new tab will effectively open in the  
     background.
 
-
- NOTE: With `-g` or `-G` specified, for technical reasons, Terminal / the new  
-       tab will still activate *briefly, temporarily* in most scenarios.
+NOTE: With `-g` or `-G` specified, for technical reasons, Terminal / the new  
+      tab will still activate *briefly, temporarily* in most scenarios.
 
 ## STANDARD OPTIONS
- All standard options provide information only.
+
+All standard options provide information only.
 
  * `-h, --help`  
     Prints the contents of the synopsis chapter to stdout for quick reference.
@@ -386,10 +403,12 @@ osascript <<<"$script"
     Opens this utility's home page in the system's default web browser.
 
 ## LICENSE
- For license information and more, visit this utility's home page by running  
- `ttab --home`.
+
+For license information and more, visit this utility's home page by running  
+`ttab --home`.
 
 ## EXAMPLES
+
     # Open new tab in current terminal window:
     ttab
 
