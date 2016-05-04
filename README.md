@@ -5,7 +5,7 @@
 
 **Contents**
 
-- [ttab &mdash; Introduction](#ttab-&mdash-introduction)
+- [ttab &mdash; open a new Terminal.app / iTerm.app tab or window](#ttab-&mdash-open-a-new-terminalapp--itermapp-tab-or-window)
 - [Installation](#installation)
   - [Installation from the npm registry](#installation-from-the-npm-registry)
   - [Manual installation](#manual-installation)
@@ -19,14 +19,18 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
-# ttab &mdash; Introduction
+# ttab &mdash; open a new Terminal.app / iTerm.app tab or window
 
-An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal.app`, optionally with a command to execute and/or a specific title and specific display settings.
+An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal.app`, 
+or in popular alternative [`iTerm.app`](http://www.iterm2.com/), optionally with a command to execute and/or a specific title and specific display settings.
+
+Note: `iTerm.app` support is experimental in that it is currently not covered by the automated tests run before every release.
+
 
 # Installation
 
-**Important**: Irrespective of installation method, `ttab` needs to be granted _access for assistive devices_ in order to operate, which is a _one-time operation that requires administrative privileges_.  
-If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` is in the list on the right and has a checkmark.  
+**Important**: Irrespective of installation method, `Terminal.app` / `iTerm.app` needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
+If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` / `iTerm.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
 
 ## Installation from the npm registry
@@ -62,7 +66,7 @@ ttab ls -l "$HOME/Library/Application Support"
 # command before showing the prompt.
 ttab -d ~/Library/Application\ Support ls -1 
 
-# Open a new tab with title 'How Green Was My Valley' and settings 'Grass'.
+# Open a new tab with title 'How Green Was My Valley' (-t not supported in iTerm) and settings 'Grass'.
 ttab -t 'How Green Was My Valley' -s Grass
 
 # Open a new tab and execute the specified script before showing the prompt.
@@ -84,15 +88,16 @@ Find concise usage information below; for complete documentation, read the [manu
 ```nohighlight
 $ ttab --help
 
-Opens a new terminal tab or window in OS X's Terminal.app application.
+
+Opens a new terminal tab or window in OS X's Terminal application or iTerm.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
     -w                  open new tab in new terminal window
-    -s <settings>       assign a Terminal.app settings set (profile)
-    -t <title>          specify title for new tab
-    -g                  create tab in background (do not activate Terminal.app)
-    -G                  create tab in background and do not activate new tab
+    -s <settings>       assign a settings set (profile)
+    -t <title>          specify title for new tab (not supported in iTerm)
+    -g                  create tab in background (don't activate Terminal/iTerm)
+    -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
     <cmd> [<arg>...]    command to execute in the new tab
 
@@ -103,7 +108,7 @@ Standard options: --help, --man, --version, --home
 
 # License
 
-Copyright (c) 2015 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
+Copyright (c) 2015-2016 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
 
 ## Acknowledgements
 
@@ -130,6 +135,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.3.0](https://github.com/mklement0/ttab/compare/v0.2.1...v0.3.0)** (2016-05-04):
+  * [enhancement] Experimental support for iTerm 2 (`iTerm.app`) added.
 
 * **[v0.2.1](https://github.com/mklement0/ttab/compare/v0.2.0...v0.2.1)** (2015-09-15):
   * [dev] Makefile improvements; various other behind-the-scenes tweaks.
