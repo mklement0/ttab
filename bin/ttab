@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.3.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.3.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -83,10 +83,12 @@ esac
 
 # --- MAIN BODY
 
+# Determine the terminal application running this script (the standard Terminal.app or iTerm.app (iTerm2)).
+# Note: iTerm2's AppleScript syntax changed fundamentally in v3 (for the better, but incompatibly so). $iTermOld reflects a pre-v3 version.
 TerminalApp='Terminal' && iTerm=0
-[[ $TERM_PROGRAM == 'iTerm.app' ]] && TerminalApp='iTerm' && iTerm=1
+[[ $TERM_PROGRAM == 'iTerm.app' ]] && TerminalApp='iTerm' && iTerm=1 && { [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0; }
 
-# Undocumented debugging support: if the very first argument is --dry-run, we print out the synthesized AppleScript rather than executing it.
+# Undocumented DEBUGGING SUPPORT: if the very first argument is --dry-run, we print out the synthesized AppleScript rather than executing it.
 printScript=0 dryRun=0
 { [[ $1 == '--dry-run' ]] && { dryRun=1; shift; }; } || { [[ $1 == '--print-script' ]] && { printScript=1; shift; }; }
 
@@ -126,11 +128,9 @@ while getopts ':wgGs:t:d:' opt; do  # $opt will receive the option *letters* one
 done
 shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
-[[ -n $tabTitle && iTerm -eq 1 ]] && echo "WARNING: Ignoring option -t, which is not supported in iTerm." 1>&2
-
 # All remaining arguments, if any, make up the command to execute in the new tab/window.        
 
-# Clear any variables with names matching those we'll be using below, to be safe.
+# To be safe, clear any pre-existing variables with names matching those we'll be using below.
 for n in ${!CMD_*}; do unset $n; done
 
   # Note: We use *menu-based GUI scripting* rather than *sending keystrokes via CMD_NEWTAB_1='tell application "System Events" to keystroke "t" using {command down}'
@@ -141,14 +141,32 @@ for n in ${!CMD_*}; do unset $n; done
   #           In the default case, the GUI scripting finds the command by its keyboard shortcut so as to work locale-independently; it does, however, make the following assumptions (other than the pretty safe assumption that the command is in the 3rd menu from the left, the "Shell" menu in English):
   #       (b) it also allows us to create new tabs *with specific settings*, by finding the menu item by *name* (settings names are locale-*in*dependent, fortunately)
   #           Using this is preferable to trying to apply settings *after* tab creation with `set current settings of selected tab ...`, as the latter only applies *visual* attributes, not *behavioral* (such as what to do when the shell exits)
-if (( inNewWin )); then # create the tab in a new window
+  
+if (( inNewWin )); then # create the tab in a NEW WINDOW
+
   if (( iTerm )); then
-    CMD_NEWTAB_1='tell application "iTerm" to launch (make new terminal) session "'"$settingsName"'"'
-    if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
-      CMD_SAVE_ACTIVE_TAB='set prevTerm to current terminal'
-      CMD_REACTIVATE_PREV_TAB='set current terminal to prevTerm'
+  
+    if (( iTermOld )); then # OLD iTerm syntax (v2-)
+      # Note: Passing an empty $settingsName is accepted as specifying the default profile.
+      CMD_NEWTAB_1='tell application "iTerm" to launch (make new terminal) session "'"$settingsName"'"'
+      if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
+        CMD_SAVE_ACTIVE_TAB='set prevTerm to current terminal'
+        CMD_REACTIVATE_PREV_TAB='set current terminal to prevTerm'
+      fi
+    else # NEW iTerm syntax (introduced in v3)
+      if [[ -n $settingsName ]]; then
+        CMD_NEWTAB_1='create window with profile "'"$settingsName"'"'
+      else
+        CMD_NEWTAB_1='create window with default profile'
+      fi  
+      if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
+        CMD_SAVE_ACTIVE_TAB='set prevWin to current window'
+        CMD_REACTIVATE_PREV_TAB='tell application "System Events" to perform action "AXRaise" of window (name of prevWin) of application process "iTerm2"'
+      fi
     fi
-  else 
+    
+  else # Terminal.app
+  
     if [[ -n $settingsName ]]; then
       CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 1 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click menu item "'"$settingsName"'"'
       CMD_NEWTAB_2='set newTab to selected tab of front window'
@@ -160,16 +178,34 @@ if (( inNewWin )); then # create the tab in a new window
       CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
       CMD_REACTIVATE_PREV_TAB='set frontmost of prevWin to true' # Note that while  *Terminal.app*'s  windows have a `frontmost` property that allows their activation within the app, most other (all other?) apps' windows do not.
     fi
+    
   fi
-else # Create the new tab in the current window (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
+  
+else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
 
   if (( iTerm )); then
-    CMD_NEWTAB_1='tell application "iTerm" to launch (current terminal) session "'"$settingsName"'"'
-    if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
-      CMD_SAVE_ACTIVE_TAB='set prevSess to current session of current terminal'
-      CMD_REACTIVATE_PREV_TAB='select prevSess'
+  
+    if (( iTermOld )); then # OLD iTerm syntax (v2-)
+      # Note: Passing an empty $settingsName is accepted as specifying the default profile.    
+      CMD_NEWTAB_1='tell application "iTerm" to launch (current terminal) session "'"$settingsName"'"'
+      if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
+        CMD_SAVE_ACTIVE_TAB='set prevSess to current session of current terminal'
+        CMD_REACTIVATE_PREV_TAB='select prevSess'
+      fi
+    else # NEW iTerm syntax (introduced in v3)
+      if [[ -n $settingsName ]]; then
+        CMD_NEWTAB_1='tell current window to create tab with profile "'"$settingsName"'"'
+      else
+        CMD_NEWTAB_1='tell current window to create tab with default profile'
+      fi  
+      if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
+        CMD_SAVE_ACTIVE_TAB='set prevTab to current tab of current window'
+        CMD_REACTIVATE_PREV_TAB='select prevTab'
+      fi
     fi
-  else 
+    
+  else # Terminal.app
+  
     if [[ -n $settingsName ]]; then
         CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click menu item "'"$settingsName"'"'
     else
@@ -180,6 +216,7 @@ else # Create the new tab in the current window (unlike `do shell script` with n
       CMD_SAVE_ACTIVE_TAB='set prevTab to (selected tab of front window)'
       CMD_REACTIVATE_PREV_TAB='set selected of prevTab to true'
     fi
+    
   fi
 
 fi
@@ -254,8 +291,12 @@ if [[ -n $quotedShellCmds ]]; then
   #  - embedded doubleq quotes must be backlash-escaped
   quotedShellCmdsForAppleScript=${quotedShellCmds//\\/\\\\}
   quotedShellCmdsForAppleScript=${quotedShellCmdsForAppleScript//\"/\\\"}
-  if (( iTerm )); then    
-    CMD_CUSTOM="write (current session of current terminal) text \"${quotedShellCmdsForAppleScript}\""
+  if (( iTerm )); then
+    if (( iTermOld )); then # OLD iTerm syntax (v2-)
+      CMD_CUSTOM="write (current session of current terminal) text \"${quotedShellCmdsForAppleScript}\""
+    else # NEW iTerm syntax (introduced in v3)
+      CMD_CUSTOM="tell current session of current window to write text \"${quotedShellCmdsForAppleScript}\""
+    fi
   else
     CMD_CUSTOM="do script \"${quotedShellCmdsForAppleScript}\" in newTab"
   fi
@@ -263,7 +304,11 @@ fi
 
 if [[ -n $tabTitle ]]; then
   if (( iTerm )); then
-    : # Sadly, iTerm doesn't support titling tabs; the session class has a 'name' property, but it always seems to contain 'Shell'
+    if (( iTermOld )); then # OLD iTerm syntax (v2-)
+      CMD_TITLE="tell current session of current terminal to set name to \"$tabTitle\""
+    else # NEW iTerm syntax (introduced in v3)
+      CMD_TITLE="tell current session of current window to set name to \"$tabTitle\""
+    fi
   else 
     CMD_TITLE="set custom title of newTab to \"$tabTitle\""
   fi
@@ -344,7 +389,7 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
-    -t <title>          specify title for new tab (not supported in iTerm)
+    -t <title>          specify title for new tab
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
@@ -400,7 +445,7 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     o Term.app: profiles are defined in Preferences > Profiles; name matching is  
     case-*sensitive*, and specifying a nonexistent profile is ignored.
 
- * `-t <title>` (not supported in iTerm)   
+ * `-t <title>`   
     specifies a custom title to assign to the new tab; otherwise, if a   
     command is specified, its first token will become the new tab's title.
 

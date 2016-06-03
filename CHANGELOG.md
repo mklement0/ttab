@@ -4,8 +4,12 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.3.1](https://github.com/mklement0/ttab/compare/v0.3.0...v0.3.1)** (2016-06-03):
+  * [enhancement] Support for iTerm2 v3 added (whose AppleScript syntax changed fundamentally)
+  * [enhancement] Setting a tab title is now also supported in iTerm2 v2.
+
 * **[v0.3.0](https://github.com/mklement0/ttab/compare/v0.2.1...v0.3.0)** (2016-05-04):
-  * [enhancement] Experimental support for iTerm 2 (`iTerm.app`) added.
+  * [enhancement] Experimental support for iTerm2 (`iTerm.app`) added.
 
 * **[v0.2.1](https://github.com/mklement0/ttab/compare/v0.2.0...v0.2.1)** (2015-09-15):
   * [dev] Makefile improvements; various other behind-the-scenes tweaks.

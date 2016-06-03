@@ -66,7 +66,7 @@ ttab ls -l "$HOME/Library/Application Support"
 # command before showing the prompt.
 ttab -d ~/Library/Application\ Support ls -1 
 
-# Open a new tab with title 'How Green Was My Valley' (-t not supported in iTerm) and settings 'Grass'.
+# Open a new tab with title 'How Green Was My Valley' and settings 'Grass'.
 ttab -t 'How Green Was My Valley' -s Grass
 
 # Open a new tab and execute the specified script before showing the prompt.
@@ -95,7 +95,7 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
-    -t <title>          specify title for new tab (not supported in iTerm)
+    -t <title>          specify title for new tab
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
@@ -136,8 +136,12 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.3.1](https://github.com/mklement0/ttab/compare/v0.3.0...v0.3.1)** (2016-06-03):
+  * [enhancement] Support for iTerm2 v3 added (whose AppleScript syntax changed fundamentally)
+  * [enhancement] Setting a tab title is now also supported in iTerm2 v2.
+
 * **[v0.3.0](https://github.com/mklement0/ttab/compare/v0.2.1...v0.3.0)** (2016-05-04):
-  * [enhancement] Experimental support for iTerm 2 (`iTerm.app`) added.
+  * [enhancement] Experimental support for iTerm2 (`iTerm.app`) added.
 
 * **[v0.2.1](https://github.com/mklement0/ttab/compare/v0.2.0...v0.2.1)** (2015-09-15):
   * [dev] Makefile improvements; various other behind-the-scenes tweaks.

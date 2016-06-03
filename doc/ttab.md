@@ -10,7 +10,7 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
-    -t <title>          specify title for new tab (not supported in iTerm)
+    -t <title>          specify title for new tab
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
@@ -66,7 +66,7 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     o Term.app: profiles are defined in Preferences > Profiles; name matching is  
     case-*sensitive*, and specifying a nonexistent profile is ignored.
 
- * `-t <title>` (not supported in iTerm)   
+ * `-t <title>`   
     specifies a custom title to assign to the new tab; otherwise, if a   
     command is specified, its first token will become the new tab's title.
 

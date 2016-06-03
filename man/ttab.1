@@ -1,4 +1,4 @@
-.TH "TTAB" "1" "May 2016" "v0.3.0" ""
+.TH "TTAB" "1" "June 2016" "v0.3.1" ""
 .SH "NAME"
 \fBttab\fR \- open a new Terminal\.app / iTerm\.app tab or window
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 
 \-w                  open new tab in new terminal window
 \-s <settings>       assign a settings set (profile)
-\-t <title>          specify title for new tab (not supported in iTerm)
+\-t <title>          specify title for new tab
 \-g                  create tab in background (don't activate Terminal/iTerm)
 \-G                  create tab in background and don't activate new tab
 \-d <dir>            specify working directory
@@ -95,7 +95,7 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .br
  case\-\fIsensitive\fR, and specifying a nonexistent profile is ignored\.
 .IP \(bu 2
-\fB\-t <title>\fP (not supported in iTerm)
+\fB\-t <title>\fP
 .br
  specifies a custom title to assign to the new tab; otherwise, if a
 .br
