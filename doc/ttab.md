@@ -4,7 +4,7 @@
 
 ## SYNOPSIS
 
-Opens a new terminal tab or window in OS X's Terminal application or iTerm.
+Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
@@ -14,20 +14,21 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
+    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> [<arg>...]    command to execute in the new tab
 
 Standard options: `--help`, `--man`, `--version`, `--home`
 
 ## DESCRIPTION
 
-`ttab` opens a new Terminal.app or iTerm.app tab with a variety of options,  
+`ttab` opens a new Terminal or iTerm2 tab with a variety of options,  
 including executing a command in the new tab, assigning a title and working  
 directory, and opening the tab in a new window.
 
-Note: iTerm.app support is experimental in that it is currently not covered by  
+Note: iTerm2 support is experimental in that it is currently not covered by  
 the automated tests run before every release.
 
-IMPORTANT: **Terminal.app/iTerm.app must be allowed assistive access** in order  
+IMPORTANT: **Terminal/iTerm2 must be allowed assistive access** in order  
 for this  utility to work, which requires one-time authorization with  
 administrative privileges. If you get error messages instead of being prompted,  
 authorize the application via  
@@ -60,15 +61,17 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
  * `-s <settings>`  
     specifies the settings set (profile) to apply to the new tab, determining  
     the appearance and behavior of the new tab.  
-    o Terminal.app: settings sets are defined in Preferences > Profiles;  
+    o Terminal: settings sets are defined in Preferences > Profiles;  
     name matching is case-*in*sensitive, and specifying nonexistent settings  
     causes an error.
-    o Term.app: profiles are defined in Preferences > Profiles; name matching is  
-    case-*sensitive*, and specifying a nonexistent profile is ignored.
+    o iTerm2: profiles are defined in Preferences > Profiles; name matching  
+    is case-*sensitive*, and specifying a nonexistent profile causes an error.
 
  * `-t <title>`   
-    specifies a custom title to assign to the new tab; otherwise, if a   
-    command is specified, its first token will become the new tab's title.
+    specifies a custom title to assign to the new tab; otherwise, if a  
+    command is specified, its first token will become the new tab's title.  
+    CAVEAT: As of iTerm2 v3.0.9, choosing a title that exactly matches the  
+    settings name specified with `-s` causes the title to be ignored.
 
  * `-d <dir>`  
     explicitly specifies a working directory for the new tab; by default, the  
@@ -76,19 +79,26 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     specified).
 
  * `-g`  
-    (back*g*round) causes Terminal/iTerm not to activate, if it isn't the  
+    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
     frontmost application); within the application, however, the new tab will  
     become the active tab; useful in scripts that launch other applications and  
-    don't want Terminal/iTerm to steal focus later.
+    don't want Terminal/iTerm2 to steal focus later.
 
  * `-G`  
-    causes Terminal/iTerm not to activate *and* the active element within  
+    causes Terminal/iTerm2 not to activate *and* the active element within  
     the application not to change; i.e., the active window and tab stay the  
-    same. If Terminal/iTerm happens to be frontmost, the new tab will  
+    same. If Terminal/iTerm2 happens to be frontmost, the new tab will  
     effectively open in the background.
 
-NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm /  
+NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /  
       the new tab will still activate *briefly, temporarily* in most scenarios.
+
+* `-a Terminal` or `-a iTerm2`  
+    explicitly specifies the terminal application to use; by default, the   
+    terminal application from which this utility is run is implied, if  
+    supported, with Terminal used as the fallback.  
+    This options is useful for calling this utility from non-terminal  
+    applications such as Alfred (https://www.alfredapp.com/).
 
 ## STANDARD OPTIONS
 
@@ -120,7 +130,7 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
-    # Open new tab with title 'Green' using settings 'Grass':
+    # Open new tab with title 'Green' using settings (profile) 'Grass':
     ttab -t Green -s Grass  
 
     # Open new tab and execute a command in it:
@@ -130,9 +140,12 @@ For license information and more, visit this utility's home page by running
     ttab -d "$HOME/Library/Application Support" ls -l
     
     # Execute a command and exit.
-    # If configured via settings, also close the tab.
+    # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
     
     # Pass a multi-command string via 'eval', wait for a keystroke, then exit.
     ttab eval 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
+
+    # Create a new tab explicitly in iTerm2.
+    ttab -a iTerm2 echo "Hi from iTerm2."

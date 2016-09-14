@@ -13,7 +13,11 @@ tell application "Terminal"'s front window
 
   # Create tab in background.
   do shell script ttabBin & " -G"
-
+ 
+  # !! Sleep a little to makes sure that the newly created tab is reflected
+  # !! in `(count of tabs)` below. 
+  delay 3
+ 
   if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
 
   # Ensure that the original tab is the selected  one (again)

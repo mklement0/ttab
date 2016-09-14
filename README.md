@@ -5,7 +5,7 @@
 
 **Contents**
 
-- [ttab &mdash; open a new Terminal.app / iTerm.app tab or window](#ttab-&mdash-open-a-new-terminalapp--itermapp-tab-or-window)
+- [ttab &mdash; open a new Terminal.app / iTerm2.app tab or window](#ttab-&mdash-open-a-new-terminalapp--iterm2app-tab-or-window)
 - [Installation](#installation)
   - [Installation from the npm registry](#installation-from-the-npm-registry)
   - [Manual installation](#manual-installation)
@@ -19,17 +19,17 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
-# ttab &mdash; open a new Terminal.app / iTerm.app tab or window
+# ttab &mdash; open a new Terminal.app / iTerm2.app tab or window
 
-An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal.app`, 
-or in popular alternative [`iTerm.app`](http://www.iterm2.com/), optionally with a command to execute and/or a specific title and specific display settings.
+An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal`, 
+or in popular alternative [`iTerm2`](http://www.iterm2.com/), optionally with a command to execute and/or a specific title and specific display settings.
 
-Note: `iTerm.app` support is experimental in that it is currently not covered by the automated tests run before every release.
+Note: `iTerm2` support is experimental in that it is currently not covered by the automated tests run before every release.
 
 
 # Installation
 
-**Important**: Irrespective of installation method, `Terminal.app` / `iTerm.app` needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
+**Important**: Irrespective of installation method, `Terminal` / `iTerm2` (`iTerm.app`) needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` / `iTerm.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
 
@@ -77,6 +77,9 @@ ttab exec /path/to/someScript
 
 # Open a new tab, execute a command, wait for a keypress, and exit.
 ttab eval 'ls "$HOME/Library/Application Support"; echo Press a key to exit.; read -rsn 1; exit'
+
+# Open a new tab in iTerm2 (if installed).
+ttab -a iTerm2 echo 'Hi from iTerm2.'
 ```
 
 # Usage
@@ -89,7 +92,7 @@ Find concise usage information below; for complete documentation, read the [manu
 $ ttab --help
 
 
-Opens a new terminal tab or window in OS X's Terminal application or iTerm.
+Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
@@ -99,6 +102,7 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
+    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> [<arg>...]    command to execute in the new tab
 
 Standard options: --help, --man, --version, --home
@@ -135,6 +139,13 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.4.0](https://github.com/mklement0/ttab/compare/v0.3.1...v0.4.0)** (2016-09-13):
+  * [enhancement] `-a Terminal|iTerm2` now allows specifying the target Terminal
+    application, which is useful for launching `ttab` from non-terminal applications
+    such as [Alfred](http://alfredapp.com).
+  * [fix] Specifying a syntactically invalid shell command to execute in the
+    new tab now causes `ttab` to report a nonzero exit code.
 
 * **[v0.3.1](https://github.com/mklement0/ttab/compare/v0.3.0...v0.3.1)** (2016-06-03):
   * [enhancement] Support for iTerm2 v3 added (whose AppleScript syntax changed fundamentally)

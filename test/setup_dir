@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Make sure that we're being run from Terminal.app.
+# !! Sadly, as of urching v0.0.5, returning a nonzero exit code from `setup` or `setup_dir` scripts does NOT cause
+# !! running further test scripts to abort.
+[[ $TERM_PROGRAM == 'Apple_Terminal' ]] || { echo "PLEASE RUN THESE TESTS FROM Terminal.app ONLY." >&2; exit 2; }
+
+cat <<EOF >&2
+====
+NOTE: The test scripts will perform GUI scripting. 
+EXPECT SIMULATED USER ACTIVITY - such as creating new tabs and windows - 
+and therefore lots of FLASHING - throughout running the whole suite of tests.
+====
+EOF
+

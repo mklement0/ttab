@@ -26,6 +26,8 @@ tell application "Terminal"'s front window
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
+  # !! The default of most settings is to leave the tab open on termination of the shell, so unless you change that, thisTab
+  # !! test will leave the tab open. 
   do script "exit" in selected tab
   set selected tab to thisTab # Re-select the previously active tab
 

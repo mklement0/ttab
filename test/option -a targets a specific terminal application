@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+ttabBin="../bin/ttab"
+
+[[ -d /Applications/iTerm.app ]] || { echo "CANNOT TEST OPTION -a, because iTerm2 appears not to be installed." >&2; exit 0; }
+
+numWinsBefore=$(osascript -e 'tell application "iTerm.app" to count windows')
+
+"$ttabBin" -a iTerm2 -w echo "Hi!"
+
+numWinsAfter=$(osascript -e 'tell application "iTerm.app" to count windows')
+
+(( numWinsAfter == numWinsBefore + 1 )) || { echo "Expected to find $(( numWinsBefore + 1 )) windows, but found $numWinsAfter" >&2; exit 1; }
+
+exit 0

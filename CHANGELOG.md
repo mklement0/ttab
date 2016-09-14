@@ -4,6 +4,13 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.4.0](https://github.com/mklement0/ttab/compare/v0.3.1...v0.4.0)** (2016-09-13):
+  * [enhancement] `-a Terminal|iTerm2` now allows specifying the target Terminal
+    application, which is useful for launching `ttab` from non-terminal applications
+    such as [Alfred](http://alfredapp.com).
+  * [fix] Specifying a syntactically invalid shell command to execute in the
+    new tab now causes `ttab` to report a nonzero exit code.
+
 * **[v0.3.1](https://github.com/mklement0/ttab/compare/v0.3.0...v0.3.1)** (2016-06-03):
   * [enhancement] Support for iTerm2 v3 added (whose AppleScript syntax changed fundamentally)
   * [enhancement] Setting a tab title is now also supported in iTerm2 v2.

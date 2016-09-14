@@ -1,9 +1,9 @@
-.TH "TTAB" "1" "June 2016" "v0.3.1" ""
+.TH "TTAB" "1" "September 2016" "v0.4.0" ""
 .SH "NAME"
 \fBttab\fR \- open a new Terminal\.app / iTerm\.app tab or window
 .SH SYNOPSIS
 .P
-Opens a new terminal tab or window in OS X's Terminal application or iTerm\.
+Opens a new terminal tab or window in OS X's Terminal application or iTerm2\.
 .P
 .RS 2
 .nf
@@ -15,6 +15,7 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 \-g                  create tab in background (don't activate Terminal/iTerm)
 \-G                  create tab in background and don't activate new tab
 \-d <dir>            specify working directory
+\-a Terminal|iTerm2  open tab or window in Terminal\.app / iTerm2  
 <cmd> [<arg>\.\.\.]    command to execute in the new tab
 .fi
 .RE
@@ -22,17 +23,17 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\
 Standard options: \fB\-\-help\fP, \fB\-\-man\fP, \fB\-\-version\fP, \fB\-\-home\fP
 .SH DESCRIPTION
 .P
-\fBttab\fP opens a new Terminal\.app or iTerm\.app tab with a variety of options,
+\fBttab\fP opens a new Terminal or iTerm2 tab with a variety of options,
 .br
 including executing a command in the new tab, assigning a title and working
 .br
 directory, and opening the tab in a new window\.
 .P
-Note: iTerm\.app support is experimental in that it is currently not covered by
+Note: iTerm2 support is experimental in that it is currently not covered by
 .br
 the automated tests run before every release\.
 .P
-IMPORTANT: \fBTerminal\.app/iTerm\.app must be allowed assistive access\fR in order
+IMPORTANT: \fBTerminal/iTerm2 must be allowed assistive access\fR in order
 .br
 for this  utility to work, which requires one\-time authorization with
 .br
@@ -86,20 +87,24 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .br
  the appearance and behavior of the new tab\.
 .br
- o Terminal\.app: settings sets are defined in Preferences > Profiles;
+ o Terminal: settings sets are defined in Preferences > Profiles;
 .br
  name matching is case\-\fIin\fRsensitive, and specifying nonexistent settings
 .br
  causes an error\.
- o Term\.app: profiles are defined in Preferences > Profiles; name matching is
+ o iTerm2: profiles are defined in Preferences > Profiles; name matching
 .br
- case\-\fIsensitive\fR, and specifying a nonexistent profile is ignored\.
+ is case\-\fIsensitive\fR, and specifying a nonexistent profile causes an error\.
 .IP \(bu 2
 \fB\-t <title>\fP
 .br
  specifies a custom title to assign to the new tab; otherwise, if a
 .br
  command is specified, its first token will become the new tab's title\.
+.br
+ CAVEAT: As of iTerm2 v3\.0\.9, choosing a title that exactly matches the
+.br
+ settings name specified with \fB\-s\fP causes the title to be ignored\.
 .IP \(bu 2
 \fB\-d <dir>\fP
 .br
@@ -111,29 +116,44 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .IP \(bu 2
 \fB\-g\fP
 .br
- (back\fIg\fRround) causes Terminal/iTerm not to activate, if it isn't the
+ (back\fIg\fRround) causes Terminal/iTerm2 not to activate, if it isn't the
 .br
  frontmost application); within the application, however, the new tab will
 .br
  become the active tab; useful in scripts that launch other applications and
 .br
- don't want Terminal/iTerm to steal focus later\.
+ don't want Terminal/iTerm2 to steal focus later\.
 .IP \(bu 2
 \fB\-G\fP
 .br
- causes Terminal/iTerm not to activate \fIand\fR the active element within
+ causes Terminal/iTerm2 not to activate \fIand\fR the active element within
 .br
  the application not to change; i\.e\., the active window and tab stay the
 .br
- same\. If Terminal/iTerm happens to be frontmost, the new tab will
+ same\. If Terminal/iTerm2 happens to be frontmost, the new tab will
 .br
  effectively open in the background\.
 
 .RE
 .P
-NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal/iTerm /
+NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal/iTerm2 /
 .br
       the new tab will still activate \fIbriefly, temporarily\fR in most scenarios\.
+.RS 0
+.IP \(bu 2
+\fB\-a Terminal\fP or \fB\-a iTerm2\fP
+.br
+  explicitly specifies the terminal application to use; by default, the
+.br
+  terminal application from which this utility is run is implied, if
+.br
+  supported, with Terminal used as the fallback\.
+.br
+  This options is useful for calling this utility from non\-terminal
+.br
+  applications such as Alfred (https://www\.alfredapp\.com/)\.
+
+.RE
 .SH STANDARD OPTIONS
 .P
 All standard options provide information only\.
@@ -172,7 +192,7 @@ ttab
 # Open new tab in new terminal window:
 ttab \-w
 
-# Open new tab with title 'Green' using settings 'Grass':
+# Open new tab with title 'Green' using settings (profile) 'Grass':
 ttab \-t Green \-s Grass  
 
 # Open new tab and execute a command in it:
@@ -182,12 +202,15 @@ ttab ls \-l "$HOME/Library/Application Support"
 ttab \-d "$HOME/Library/Application Support" ls \-l
 
 # Execute a command and exit\.
-# If configured via settings, also close the tab\.
+# If configured via the default profile, also close the tab\.
 ttab exec /path/to/someprogram arg1 arg2
 
 # Pass a multi\-command string via 'eval', wait for a keystroke, then exit\.
 ttab eval 'ls "$HOME/Library/Application Support";
                             echo Press any key to exit; read \-rsn 1; exit'
+
+# Create a new tab explicitly in iTerm2\.
+ttab \-a iTerm2 echo "Hi from iTerm2\."
 .fi
 .RE
 

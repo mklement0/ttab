@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.3.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.4.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -83,11 +83,6 @@ esac
 
 # --- MAIN BODY
 
-# Determine the terminal application running this script (the standard Terminal.app or iTerm.app (iTerm2)).
-# Note: iTerm2's AppleScript syntax changed fundamentally in v3 (for the better, but incompatibly so). $iTermOld reflects a pre-v3 version.
-TerminalApp='Terminal' && iTerm=0
-[[ $TERM_PROGRAM == 'iTerm.app' ]] && TerminalApp='iTerm' && iTerm=1 && { [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0; }
-
 # Undocumented DEBUGGING SUPPORT: if the very first argument is --dry-run, we print out the synthesized AppleScript rather than executing it.
 printScript=0 dryRun=0
 { [[ $1 == '--dry-run' ]] && { dryRun=1; shift; }; } || { [[ $1 == '--print-script' ]] && { printScript=1; shift; }; }
@@ -98,7 +93,8 @@ tabTitle=''
 settingsName=''
 inBackground=0
 inNewWin=0
-while getopts ':wgGs:t:d:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
+terminalApp="$TERM_PROGRAM"   # default to the terminal program that is running this script 
+while getopts ':wgGs:t:d:a:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
   [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
   [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
   case "$opt" in
@@ -115,6 +111,9 @@ while getopts ':wgGs:t:d:' opt; do  # $opt will receive the option *letters* one
       dir=$OPTARG
       dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"
       ;;
+    a)
+      terminalApp=$OPTARG
+      ;;
     g)
       inBackground=1
       ;;
@@ -128,7 +127,38 @@ while getopts ':wgGs:t:d:' opt; do  # $opt will receive the option *letters* one
 done
 shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
-# All remaining arguments, if any, make up the command to execute in the new tab/window.        
+# All remaining arguments, if any, make up the command to execute in the new tab/window.
+
+# Determine the terminal application that was explicitly specified or happens to be running this script.
+# Currently, the only programs supported are the standard Terminal.app and iTerm.app (iTerm2).
+iTerm=0
+shopt -s nocasematch  # we want to match the application name case-INSensitively.
+case $terminalApp in
+  ''|'Apple_Terminal'|'Terminal'|'Terminal.app')
+    # Note: 'Apple_Terminal' is what $TERM_PROGRAM contains when running from Terminal.app
+    # Use standard Terminal.app application.
+    ;;
+  'iTerm'|'iTerm.app'|'iTerm2'|'iTerm2.app')
+    # Note: 'iTerm.app' is what $TERM_PROGRAM contains when running from iTerm.app
+    iTerm=1
+    ;;
+  *)
+    # If an unknown terminal is specified, we issue a warning and fall back to Terminal.app
+    echo "WARNING: '$terminalApp' is not a supported terminal application; defaulting to Terminal.app." >&2    
+    ;;
+esac
+shopt -u nocasematch
+
+# Set target-terminal-app-appropriate variables used later. 
+if (( iTerm )); then
+  terminalApp='iTerm' # will be used with `activate application`
+  # Note: iTerm2's AppleScript syntax changed fundamentally in v3 (for the better, but incompatibly so),
+  #       so we need to distinguish versions below. 
+  #       $iTermOld reflects a pre-v3 version.
+  [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0
+else # Terminal.app
+  terminalApp='Terminal' # will be used with `activate application`
+fi
 
 # To be safe, clear any pre-existing variables with names matching those we'll be using below.
 for n in ${!CMD_*}; do unset $n; done
@@ -231,6 +261,12 @@ if (( inBackground )); then
   repeat until frontmost
       delay 0.1
   end repeat'
+else # foreground operation (backgrounding with -g or -G NOT requested) - we activate explicitly, so as to support invocation from helper apps such as Alfred where the terminal may be created implicitly and not gain focus by default. 
+  # CMD_ACTIVATE = 'activate'x
+  CMD_ACTIVATE='activate
+  repeat until frontmost
+      delay 0.1
+  end repeat'
 fi
 
   # Optional commands that are only used if the relevant options were specified.
@@ -318,7 +354,7 @@ fi
 # !! At least on 10.10, the commands to save the active application and to reactivate it later must be OUTSIDE of the tell application "Terminal" block to work.
 read -d '' -r script <<EOF
 $CMD_SAVE_ACTIVE_APPNAME
-tell application "$TerminalApp"
+tell application "$terminalApp"
   $CMD_SAVE_ACTIVE_TAB
   $CMD_ACTIVATE
   $CMD_NEWTAB_1
@@ -333,8 +369,11 @@ EOF
 
 (( dryRun || printScript )) && { printf %s "$script"; (( dryRun )) && exit; }
 
-# Execute the AppleScript
-osascript <<<"$script"
+# Execute the synthesized AppleScript.
+# Note: By using `exec` we pass `osascript`'s exit code through and 
+#       END EXECUTION HERE, so that that the `: <<...` here-doc for the man page 
+#       below doesn't reset the exit code to 0.
+exec osascript <<<"$script"
 
 ####
 # MAN PAGE MARKDOWN SOURCE
@@ -349,7 +388,7 @@ osascript <<<"$script"
 #     To support plain-text rendering in the terminal, limit all lines to 80 chars.,
 #     and, for similar rendering as HTML, *end every line with 2 trailing spaces*.
 #   - HEADINGS
-#     - For better plain-text rendering, leave an empty line after a heading
+#     - For better plain-text rendering, leave an empty line after a heading.
 #       marked-man will remove it from the ROFF version.
 #     - The first heading must be a level-1 heading containing the utility
 #       name and very brief description; append the manual-section number 
@@ -383,7 +422,7 @@ osascript <<<"$script"
 
 ## SYNOPSIS
 
-Opens a new terminal tab or window in OS X's Terminal application or iTerm.
+Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
     ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
 
@@ -393,20 +432,21 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm.
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
+    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> [<arg>...]    command to execute in the new tab
 
 Standard options: `--help`, `--man`, `--version`, `--home`
 
 ## DESCRIPTION
 
-`ttab` opens a new Terminal.app or iTerm.app tab with a variety of options,  
+`ttab` opens a new Terminal or iTerm2 tab with a variety of options,  
 including executing a command in the new tab, assigning a title and working  
 directory, and opening the tab in a new window.
 
-Note: iTerm.app support is experimental in that it is currently not covered by  
+Note: iTerm2 support is experimental in that it is currently not covered by  
 the automated tests run before every release.
 
-IMPORTANT: **Terminal.app/iTerm.app must be allowed assistive access** in order  
+IMPORTANT: **Terminal/iTerm2 must be allowed assistive access** in order  
 for this  utility to work, which requires one-time authorization with  
 administrative privileges. If you get error messages instead of being prompted,  
 authorize the application via  
@@ -439,15 +479,17 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
  * `-s <settings>`  
     specifies the settings set (profile) to apply to the new tab, determining  
     the appearance and behavior of the new tab.  
-    o Terminal.app: settings sets are defined in Preferences > Profiles;  
+    o Terminal: settings sets are defined in Preferences > Profiles;  
     name matching is case-*in*sensitive, and specifying nonexistent settings  
     causes an error.
-    o Term.app: profiles are defined in Preferences > Profiles; name matching is  
-    case-*sensitive*, and specifying a nonexistent profile is ignored.
+    o iTerm2: profiles are defined in Preferences > Profiles; name matching  
+    is case-*sensitive*, and specifying a nonexistent profile causes an error.
 
  * `-t <title>`   
-    specifies a custom title to assign to the new tab; otherwise, if a   
-    command is specified, its first token will become the new tab's title.
+    specifies a custom title to assign to the new tab; otherwise, if a  
+    command is specified, its first token will become the new tab's title.  
+    CAVEAT: As of iTerm2 v3.0.9, choosing a title that exactly matches the  
+    settings name specified with `-s` causes the title to be ignored.
 
  * `-d <dir>`  
     explicitly specifies a working directory for the new tab; by default, the  
@@ -455,19 +497,26 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     specified).
 
  * `-g`  
-    (back*g*round) causes Terminal/iTerm not to activate, if it isn't the  
+    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
     frontmost application); within the application, however, the new tab will  
     become the active tab; useful in scripts that launch other applications and  
-    don't want Terminal/iTerm to steal focus later.
+    don't want Terminal/iTerm2 to steal focus later.
 
  * `-G`  
-    causes Terminal/iTerm not to activate *and* the active element within  
+    causes Terminal/iTerm2 not to activate *and* the active element within  
     the application not to change; i.e., the active window and tab stay the  
-    same. If Terminal/iTerm happens to be frontmost, the new tab will  
+    same. If Terminal/iTerm2 happens to be frontmost, the new tab will  
     effectively open in the background.
 
-NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm /  
+NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /  
       the new tab will still activate *briefly, temporarily* in most scenarios.
+
+* `-a Terminal` or `-a iTerm2`  
+    explicitly specifies the terminal application to use; by default, the   
+    terminal application from which this utility is run is implied, if  
+    supported, with Terminal used as the fallback.  
+    This options is useful for calling this utility from non-terminal  
+    applications such as Alfred (https://www.alfredapp.com/).
 
 ## STANDARD OPTIONS
 
@@ -499,7 +548,7 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
-    # Open new tab with title 'Green' using settings 'Grass':
+    # Open new tab with title 'Green' using settings (profile) 'Grass':
     ttab -t Green -s Grass  
 
     # Open new tab and execute a command in it:
@@ -509,10 +558,13 @@ For license information and more, visit this utility's home page by running
     ttab -d "$HOME/Library/Application Support" ls -l
     
     # Execute a command and exit.
-    # If configured via settings, also close the tab.
+    # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
     
     # Pass a multi-command string via 'eval', wait for a keystroke, then exit.
     ttab eval 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
+
+    # Create a new tab explicitly in iTerm2.
+    ttab -a iTerm2 echo "Hi from iTerm2."
 EOF_MAN_PAGE
