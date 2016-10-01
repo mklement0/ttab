@@ -2,7 +2,7 @@
 
 ttabBin="../bin/ttab"
 
-[[ -d /Applications/iTerm.app ]] || { echo "CANNOT TEST OPTION -a, because iTerm2 appears not to be installed." >&2; exit 0; }
+[[ -d /Applications/iTerm.app ]] || { echo "WARNING: Cannot test option -a, because iTerm2 appears not to be installed." >&2; exit 0; }
 
 numWinsBefore=$(osascript -e 'tell application "iTerm.app" to count windows')
 

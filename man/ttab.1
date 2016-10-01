@@ -1,4 +1,4 @@
-.TH "TTAB" "1" "September 2016" "v0.4.0" ""
+.TH "TTAB" "1" "October 2016" "v0.5.0" ""
 .SH "NAME"
 \fBttab\fR \- open a new Terminal\.app / iTerm\.app tab or window
 .SH SYNOPSIS
@@ -7,16 +7,18 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2\.
 .P
 .RS 2
 .nf
-ttab [\-w] [\-s <settings>] [\-t <title>] [\-g|\-G] [\-d <dir>] [<cmd> [<arg>\.\.\.]]
+ttab [\-w] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
 
 \-w                  open new tab in new terminal window
 \-s <settings>       assign a settings set (profile)
 \-t <title>          specify title for new tab
+\-q                  clear the new tab's screen
 \-g                  create tab in background (don't activate Terminal/iTerm)
 \-G                  create tab in background and don't activate new tab
 \-d <dir>            specify working directory
 \-a Terminal|iTerm2  open tab or window in Terminal\.app / iTerm2  
-<cmd> [<arg>\.\.\.]    command to execute in the new tab
+<cmd> \.\.\.           command to execute in the new tab
+"<cmd> \.\.\.; \.\.\."    multi\-command command line (passed as single operand)
 .fi
 .RE
 .P
@@ -59,11 +61,7 @@ terminates\. If the tab's settings are configured to close tabs on termination
 .br
 of the shell, the tab will close automatically\.
 .P
-To specify \fImultiple\fR commands, use \fBeval\fP followed by a single, quoted
-.br
-string containing the entire shell command line to execute; in the simplest
-.br
-case, enclose the string in single\-quotes and use ';' to separate commands\.
+To specify \fImultiple\fR commands, pass them as a \fIsingle, quoted  string\fR\|\.
 .br
 Use \fBexit\fP as the last command to automatically close the tab when the
 .br
@@ -113,6 +111,16 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
  invoking shell's working directory is inherited (even if \fB\-w\fP is also
 .br
  specified)\.
+.IP \(bu 2
+\fB\-q\fP
+.br
+ (\fIq\fRuiet) issues a \fBclear\fP command after opening the new tab\.
+.br
+ Note that output will temporarily be visible while the tab is being opened;
+.br
+ also, clearing is not performed if any command passed reports an overall
+.br
+ nonzero exit code, so as to allow failures to be examined\.
 .IP \(bu 2
 \fB\-g\fP
 .br
@@ -205,8 +213,9 @@ ttab \-d "$HOME/Library/Application Support" ls \-l
 # If configured via the default profile, also close the tab\.
 ttab exec /path/to/someprogram arg1 arg2
 
-# Pass a multi\-command string via 'eval', wait for a keystroke, then exit\.
-ttab eval 'ls "$HOME/Library/Application Support";
+# Pass a multi\-command string as a single, quoted string, wait for a  
+# keystroke, then exit\.
+ttab 'ls "$HOME/Library/Application Support";
                             echo Press any key to exit; read \-rsn 1; exit'
 
 # Create a new tab explicitly in iTerm2\.

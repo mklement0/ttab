@@ -11,10 +11,10 @@ tell application "Terminal"'s front window
   set tabCountBefore to count of tabs
   set thisTab to selected tab
   
-  set cmd to "eval 'uname -v >/tmp/_ttab_test_tmpout; :'"
+  set cmd to "uname -v >/tmp/_ttab_test_tmpout; :"
   
   # Create tab 
-  do shell script ttabBin & " " & cmd
+  do shell script ttabBin & " " & quoted form of cmd
   
   if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
   

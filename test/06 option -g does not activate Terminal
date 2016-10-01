@@ -27,7 +27,7 @@ tell application "Terminal"'s front window
 
   if not ok then
     activate application "Terminal"
-    error "Terminal unexpectedly stayed the frontmost application."
+    error "Terminal unexpectedly remained the frontmost application."
   end if
 
 end tell

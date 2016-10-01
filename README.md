@@ -21,7 +21,7 @@
 
 # ttab &mdash; open a new Terminal.app / iTerm2.app tab or window
 
-An [OS X](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal`, 
+A [macOS (OS X)](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal`, 
 or in popular alternative [`iTerm2`](http://www.iterm2.com/), optionally with a command to execute and/or a specific title and specific display settings.
 
 Note: `iTerm2` support is experimental in that it is currently not covered by the automated tests run before every release.
@@ -62,6 +62,10 @@ ttab -w
 # Open a new tab and execute the specified command before showing the prompt.
 ttab ls -l "$HOME/Library/Application Support"
 
+# Open a new tab and execute *multiple* commands in it - note how the entire
+# command line is specified as *single, quoted string*.
+ttab -t 'git branch; git status'
+
 # Open a new tab, switch to the specified dir., then execute the specified 
 # command before showing the prompt.
 ttab -d ~/Library/Application\ Support ls -1 
@@ -76,7 +80,7 @@ ttab /path/to/someScript
 ttab exec /path/to/someScript
 
 # Open a new tab, execute a command, wait for a keypress, and exit.
-ttab eval 'ls "$HOME/Library/Application Support"; echo Press a key to exit.; read -rsn 1; exit'
+ttab 'ls "$HOME/Library/Application Support"; echo Press a key to exit.; read -rsn 1; exit'
 
 # Open a new tab in iTerm2 (if installed).
 ttab -a iTerm2 echo 'Hi from iTerm2.'
@@ -94,16 +98,18 @@ $ ttab --help
 
 Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
+    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
     -t <title>          specify title for new tab
+    -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
-    <cmd> [<arg>...]    command to execute in the new tab
+    <cmd> ...           command to execute in the new tab
+    "<cmd> ...; ..."    multi-command command line (passed as single operand)
 
 Standard options: --help, --man, --version, --home
 ```
@@ -139,6 +145,20 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.5.0](https://github.com/mklement0/ttab/compare/v0.4.0...v0.5.0)** (2016-10-01):
+  * [new feature] `-q` now allows clearing the "screen" of the new tab after
+     opening using `clear`, assuming any command (list) passed succeeded.
+  * [enhancement] A quoted multi-command shell command string can now be 
+    specified as a single - and only - operand, without having to precede with
+    an explicit `eval` command. 
+  * [behavior change] If no custom title is specified with `-t <title>`, no
+    attempt is made anymore to auto-derive a meaningful tab title from the
+    shell command specified, as there is no heuristic that works well in all
+    cases.
+  * [fix] [Issue #7](https://github.com/mklement0/ttab/issues/7): iTerm2
+    now also preserves the current working dir. when opening a new tab in the 
+    current window.
 
 * **[v0.4.0](https://github.com/mklement0/ttab/compare/v0.3.1...v0.4.0)** (2016-09-13):
   * [enhancement] `-a Terminal|iTerm2` now allows specifying the target Terminal

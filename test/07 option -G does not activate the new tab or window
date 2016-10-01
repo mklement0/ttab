@@ -18,7 +18,7 @@ tell application "Terminal"'s front window
   # !! in `(count of tabs)` below. 
   delay 3
  
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if (count of tabs of it) = tabCountBefore then error "Failed to create tab in front window; still-current tab count: " & (count of tabs of it)
 
   # Ensure that the original tab is the selected  one (again)
   if not selected of thisTab then    

@@ -6,16 +6,18 @@
 
 Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
+    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
     -t <title>          specify title for new tab
+    -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
-    <cmd> [<arg>...]    command to execute in the new tab
+    <cmd> ...           command to execute in the new tab
+    "<cmd> ...; ..."    multi-command command line (passed as single operand)
 
 Standard options: `--help`, `--man`, `--version`, `--home`
 
@@ -44,9 +46,7 @@ Prefix such a single command with `exec` to exit the shell after the command
 terminates. If the tab's settings are configured to close tabs on termination  
 of the shell, the tab will close automatically.
 
-To specify *multiple* commands, use `eval` followed by a single, quoted  
-string containing the entire shell command line to execute; in the simplest  
-case, enclose the string in single-quotes and use ';' to separate commands.  
+To specify *multiple* commands, pass them as a *single, quoted  string*.  
 Use `exit` as the last command to automatically close the tab when the  
 command terminates, assuming the tab's settings are configured to close the  
 tab on termination of the shell.  
@@ -77,6 +77,12 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     explicitly specifies a working directory for the new tab; by default, the  
     invoking shell's working directory is inherited (even if `-w` is also  
     specified).
+
+ * `-q`  
+    (*q*uiet) issues a `clear` command after opening the new tab.  
+    Note that output will temporarily be visible while the tab is being opened;  
+    also, clearing is not performed if any command passed reports an overall  
+    nonzero exit code, so as to allow failures to be examined.
 
  * `-g`  
     (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
@@ -143,8 +149,9 @@ For license information and more, visit this utility's home page by running
     # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
     
-    # Pass a multi-command string via 'eval', wait for a keystroke, then exit.
-    ttab eval 'ls "$HOME/Library/Application Support";
+    # Pass a multi-command string as a single, quoted string, wait for a  
+    # keystroke, then exit.
+    ttab 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
 
     # Create a new tab explicitly in iTerm2.

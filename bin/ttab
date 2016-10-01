@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.4.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.5.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -92,9 +92,11 @@ dirAbs=''
 tabTitle=''
 settingsName=''
 inBackground=0
+targetTermSpecified=0
 inNewWin=0
+cls=0
 terminalApp="$TERM_PROGRAM"   # default to the terminal program that is running this script 
-while getopts ':wgGs:t:d:a:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
+while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
   [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
   [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
   case "$opt" in
@@ -113,12 +115,16 @@ while getopts ':wgGs:t:d:a:' opt; do  # $opt will receive the option *letters* o
       ;;
     a)
       terminalApp=$OPTARG
+      targetTermSpecified=1      
       ;;
     g)
       inBackground=1
       ;;
     G)
       inBackground=2
+      ;;
+    q)
+      cls=1
       ;;
     *) # An unrecognized switch.
       dieSyntax "DESIGN ERROR: unanticipated option: $opt"
@@ -262,7 +268,6 @@ if (( inBackground )); then
       delay 0.1
   end repeat'
 else # foreground operation (backgrounding with -g or -G NOT requested) - we activate explicitly, so as to support invocation from helper apps such as Alfred where the terminal may be created implicitly and not gain focus by default. 
-  # CMD_ACTIVATE = 'activate'x
   CMD_ACTIVATE='activate
   repeat until frontmost
       delay 0.1
@@ -271,42 +276,69 @@ fi
 
   # Optional commands that are only used if the relevant options were specified.
 quotedShellCmds=''
-if (( $# )); then # Shell command(s) specified.
+shellCmdTokens=( "$@" )
+if (( ${#shellCmdTokens[@]} )); then # Shell command(s) specified.
 
-  if [[ -z $tabTitle ]]; then # no explicit title specified
-        # Use the command's first token as the tab title.
-    tabTitle=$1
-    case "$tabTitle" in
-        exec|eval) # Use following token instead, if the 1st one is 'eval' or 'exec'.
-            tabTitle=$(echo "$2" | awk '{ print $1 }') 
-            ;;
-        cd) # Use last path component of following token instead, if the 1st one is 'cd'
-            tabTitle=$(basename "$2")
-            ;;
-    esac  
+  if (( ${#shellCmdTokens[@]} == 1 )); then # Could be a mere command name like 'ls' or a multi-command string such as 'git bash && git status' 
+    # If only a single string was specified as the command to execute in the new tab:
+    # It could either be a *mere command name* OR a *quoted string containing MULTIPLE commands*.
+    # We use `type` to determine if it is a mere command name / executable in the
+    # current dir., otherwise we assume that the operand is a multi-command string
+    # in which case we must use `eval` to execute it.
+    # Note: Blindly prepending `eval` would work in MOST, but NOT ALL cases,
+    #       such as with commands whose names happen to contain substrings
+    #       that look like variable references (however rare that may be).
+    ([[ -n $dirAbs ]] && cd "$dirAbs"; type "${shellCmdTokens[0]}" &>/dev/null) || shellCmdTokens=( 'eval' "${shellCmdTokens[@]}" )
   fi
 
       # The tricky part is to quote the command tokens properly when passing them to AppleScript:
       # Quote all parameters (as needed) using printf '%q' - this will perform backslash-escaping.
       # This will allow us to not have to deal with double quotes inside the double-quoted string that will be passed to `do script`.
-  quotedShellCmds=$(printf ' %q' "$@")  # note: we'll end up with a leading space, but that's benign (a *trailing* space would be a problem with iTerm's write <session> text ... command)
+  quotedShellCmds=$(printf ' %q' "${shellCmdTokens[@]}")
+  # Note: $quotedShellCmds now has a leading space, but that's benign (a *trailing* space, by contrast, would be a problem with iTerm's `write <session> text ...` command)
 
-fi
+  # !! [AUTO-DERIVING A TAB TITLE DISABLED - there's ultimately no heuristic that's guaranteed to result in a meaningful title. Let users specify a title explicitly, if needed. ]
+  # # If no title was specified, derive it from the command specified.
+  # if [[ -z $tabTitle ]]; then # no explicit title specified
+  #       # Use the command's first (meaningful) token as the tab title.
+  #   i=0
+  #   [[ ${shellCmdTokens[i]} =~ ^exec|eval$ ]] && (( ++i ))
+  #   [[ ${shellCmdTokens[i]} == cd ]] && (( ++i ))
+  #   tabTitle=$(printf %s "${shellCmdTokens[i]}" | tr -d '\\"')
+  # fi
 
-  # If no directory was specified, we explicitly use the *current* working directory, 
-  # if we're called from *inside a script*.
-  # Rationale: Terminal.app only knows the working directory of the *top-level* shell running in each tab (as it defines an aux. function,
-  # update_terminal_cwd(), that is called via $PROMPT_COMMAND every time the prompt is displayed).
-  # Thus, when this script is invoked inside another script, it is the *top-level* shell's working directory that is invariably used by
-  # Terminal, even if the invoking script has changed the working directory. Since this is counter-intuitive, we compensate here
-  # by explicitly setting the working directory to the invoking script's with a prepended 'cd' command.
-  # $SHLVL tells us the nesting level of the current shell:
-  # 1 == top-level shell; since this script itself runs in a subshell (2, if invoked directly from the top-level shell), we can safely assume 
-  # that another *script* has invoked us, if $SHLVL >= 3.
-  # Furthermore, we want to exhibit the same behavior when creating a tab in a *new* window, whereas Terminal defaults to the home directory
-  # in that case - thus, regardless of $SHLVL, if -w is specified, we always use an explicit 'cd' command.
-if [[ -z $dirAbs && ($inNewWin -eq 1 || $SHLVL -ge 3) ]]; then
-  dirAbs=$PWD
+fi # if (( ${#shellCmdTokens[@]} )
+
+# Note: The desired behavior is to ALWAYS OPEN A TAB IN THE DIRECTORY THE CALLER
+#       CONSIDERS CURRENT, whether the new tab is being opened in the current or
+#       a new window (unless a target dir. is explicitly specified with -d <dir>).
+#       Terminal and iTerm have different default behaviors, so we need to account for
+#       that:
+#         * When opening a tab in a new *window*, both Terminal and iTerm default to the *home* dir.
+#         * When opening a new in the current window,
+#             * Terminal: the *caller's currrent dir., as known to Terminal* (see below) is used.
+#       Also, to be safe, if a target terminal is explicitly specified, we also
+#       default to issuing a `cd` command, because it might be a different terminal than the current one.  
+if (( iTerm || targetTermSpecified )); then
+  # iTerm2 always defaults to the home dir., so we must always add an explicit `cd` command to ensure that the current dir. is used.
+  if [[ -z $dirAbs ]]; then
+    dirAbs=$PWD
+  fi
+else
+    # While Terminal.app does default to the caller's current dir. when creating a tab
+    # in the *current* window, it doesn't necessarily know the *immediate caller's* true $PWD,
+    # so we have to compensate for that""
+    #   Terminal.app only knows the working directory of the *top-level* shell running in each tab (as it defines an aux. function,
+    #   update_terminal_cwd(), that is called via $PROMPT_COMMAND every time the prompt is displayed).
+    #   Thus, when this script is invoked inside another script, it is the *top-level* shell's working directory that is invariably used by
+    #   Terminal, even if the invoking script has changed the working directory. Since this is counter-intuitive, we compensate here
+    #   by explicitly setting the working directory to the invoking script's with a prepended 'cd' command.
+    #   $SHLVL tells us the nesting level of the current shell:
+    #   1 == top-level shell; since this script itself runs in a subshell (2, if invoked directly from the top-level shell), we can safely assume 
+    #   that another *script* has invoked us, if $SHLVL >= 3.
+  if [[ -z $dirAbs && ($SHLVL -ge 3 || $inNewWin -eq 1) ]]; then
+    dirAbs=$PWD
+  fi
 fi
 
   # Prepend the 'cd' command, if specified or needed.
@@ -319,12 +351,22 @@ if [[ -n $dirAbs ]]; then
   fi
 fi
 
+# Append the 'clear' command, if requested.
+if (( cls )); then
+  if [[ -n $quotedShellCmds ]]; then
+    quotedShellCmds="$quotedShellCmds && clear"
+  else
+    quotedShellCmds='clear'
+  fi
+fi
+
+
   # Synthesize the full shell command.
 if [[ -n $quotedShellCmds ]]; then
   # Pass the commands as a single AppleScript string, of necessity double-quoted.
   # For the benefit of AppleScript
   #  - embedded backslashes must be escaped by doubling them
-  #  - embedded doubleq quotes must be backlash-escaped
+  #  - embedded double quotes must be backlash-escaped
   quotedShellCmdsForAppleScript=${quotedShellCmds//\\/\\\\}
   quotedShellCmdsForAppleScript=${quotedShellCmdsForAppleScript//\"/\\\"}
   if (( iTerm )); then
@@ -338,14 +380,19 @@ if [[ -n $quotedShellCmds ]]; then
   fi
 fi
 
-if [[ -n $tabTitle ]]; then
+if [[ -n $tabTitle ]]; then # custom tab title specified
+  # For the benefit of AppleScript
+  #  - embedded backslashes must be escaped by doubling them
+  #  - embedded double quotes must be backlash-escaped
+  tabTitle=${tabTitle//\\/\\\\}
+  tabTitle=${tabTitle//\"/\\\"}
   if (( iTerm )); then
     if (( iTermOld )); then # OLD iTerm syntax (v2-)
       CMD_TITLE="tell current session of current terminal to set name to \"$tabTitle\""
     else # NEW iTerm syntax (introduced in v3)
       CMD_TITLE="tell current session of current window to set name to \"$tabTitle\""
     fi
-  else 
+  else  # Terminal.app
     CMD_TITLE="set custom title of newTab to \"$tabTitle\""
   fi
 fi
@@ -424,16 +471,18 @@ exec osascript <<<"$script"
 
 Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-g|-G] [-d <dir>] [<cmd> [<arg>...]]
+    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  open new tab in new terminal window
     -s <settings>       assign a settings set (profile)
     -t <title>          specify title for new tab
+    -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
-    <cmd> [<arg>...]    command to execute in the new tab
+    <cmd> ...           command to execute in the new tab
+    "<cmd> ...; ..."    multi-command command line (passed as single operand)
 
 Standard options: `--help`, `--man`, `--version`, `--home`
 
@@ -462,9 +511,7 @@ Prefix such a single command with `exec` to exit the shell after the command
 terminates. If the tab's settings are configured to close tabs on termination  
 of the shell, the tab will close automatically.
 
-To specify *multiple* commands, use `eval` followed by a single, quoted  
-string containing the entire shell command line to execute; in the simplest  
-case, enclose the string in single-quotes and use ';' to separate commands.  
+To specify *multiple* commands, pass them as a *single, quoted  string*.  
 Use `exit` as the last command to automatically close the tab when the  
 command terminates, assuming the tab's settings are configured to close the  
 tab on termination of the shell.  
@@ -495,6 +542,12 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
     explicitly specifies a working directory for the new tab; by default, the  
     invoking shell's working directory is inherited (even if `-w` is also  
     specified).
+
+ * `-q`  
+    (*q*uiet) issues a `clear` command after opening the new tab.  
+    Note that output will temporarily be visible while the tab is being opened;  
+    also, clearing is not performed if any command passed reports an overall  
+    nonzero exit code, so as to allow failures to be examined.
 
  * `-g`  
     (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
@@ -561,8 +614,9 @@ For license information and more, visit this utility's home page by running
     # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
     
-    # Pass a multi-command string via 'eval', wait for a keystroke, then exit.
-    ttab eval 'ls "$HOME/Library/Application Support";
+    # Pass a multi-command string as a single, quoted string, wait for a  
+    # keystroke, then exit.
+    ttab 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
 
     # Create a new tab explicitly in iTerm2.
