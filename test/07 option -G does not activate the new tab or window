@@ -90,7 +90,7 @@ on closeTerminalWindow(win, timeoutSecs)
       delay 0.1
       set elapsedSoFar to elapsedSoFar + 0.1
     end repeat
-    delay 0.5 # just for good measure - apparently, `busy` sometimes prematurely reports false
+    delay 1 # just for good measure - apparently, `busy` sometimes prematurely reports false
     close win
   end tell
 end closeTerminalWindow

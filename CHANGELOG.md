@@ -4,6 +4,10 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.5.1](https://github.com/mklement0/ttab/compare/v0.5.0...v0.5.1)** (2017-03-23):
+  * [doc] Sample command fixed.
+  * [dev] Reliability of tests improved.
+
 * **[v0.5.0](https://github.com/mklement0/ttab/compare/v0.4.0...v0.5.0)** (2016-10-01):
   * [new feature] `-q` now allows clearing the "screen" of the new tab after
      opening using `clear`, assuming any command (list) passed succeeded.
