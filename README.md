@@ -64,7 +64,7 @@ ttab ls -l "$HOME/Library/Application Support"
 
 # Open a new tab and execute *multiple* commands in it - note how the entire
 # command line is specified as *single, quoted string*.
-ttab -t 'git branch; git status'
+ttab 'git branch; git status'
 
 # Open a new tab, switch to the specified dir., then execute the specified 
 # command before showing the prompt.
