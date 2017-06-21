@@ -1,4 +1,4 @@
-.TH "TTAB" "1" "March 2017" "v0.5.1" ""
+.TH "TTAB" "1" "June 2017" "v0.6.0" ""
 .SH "NAME"
 \fBttab\fR \- open a new Terminal\.app / iTerm\.app tab or window
 .SH SYNOPSIS
@@ -15,7 +15,8 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\
 \-q                  clear the new tab's screen
 \-g                  create tab in background (don't activate Terminal/iTerm)
 \-G                  create tab in background and don't activate new tab
-\-d <dir>            specify working directory
+\-d <dir>            specify working directory; \-d '' disables inheriting
+                    the current dir\.
 \-a Terminal|iTerm2  open tab or window in Terminal\.app / iTerm2  
 <cmd> \.\.\.           command to execute in the new tab
 "<cmd> \.\.\.; \.\.\."    multi\-command command line (passed as single operand)
@@ -110,7 +111,7 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .br
  invoking shell's working directory is inherited (even if \fB\-w\fP is also
 .br
- specified)\.
+ specified) \- use \fB\-d ''\fP to disable\.
 .IP \(bu 2
 \fB\-q\fP
 .br

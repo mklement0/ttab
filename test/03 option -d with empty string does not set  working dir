@@ -4,22 +4,22 @@
 #       Also, opening new tabs in the front window is less visually disruptive.
 #       Note that while the tests terminate the new tab's shell, the tab itself may stay open, depending on its settings.
 
-set ttabBin to "../bin/ttab"
+# Determine the absolute path of `ttab`, because we'll be changing the working dir. before invoking it.
+set ttabBin to (system attribute "PWD") & "/../bin/ttab"
 
 tell application "Terminal"'s front window
     
   set tabCountBefore to count of tabs
   set thisTab to selected tab
-  
-  set workingDir to "/Library/Application Support"
-  
-  # Create tab with specified working dir.
-  do shell script ttabBin & " -d " & quoted form of workingDir
+    
+  # Inside a *subshell*, change to /, then create a tab requesting not to change the working dir.
+  # Without -d '', ttab would normally change to / (via an explicitly issued `cd` command), but
+  # without it, the PWD should either be / or, potentially, whatever the default shell profile
+  # changed it to.
+  do shell script "(cd / && " & ttabBin & " -d '')"
   
   if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
   
-  # Ensure that the desired working directory has been set.
-
   # Wait till tab has finished starting up.
   my waitUntilTerminalTabNotBusy(it, 3)
 
@@ -30,18 +30,20 @@ tell application "Terminal"'s front window
   delay 1
 
   try
-    do shell script "[[ $(</tmp/_ttab_test_tmpout) == " & quoted form of workingDir & " ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"
+    # We expect the new tab's $PWD *not* to be /
+    do shell script "[[ $(</tmp/_ttab_test_tmpout) != / ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"
   on error
     set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
-    error "New tab doesn't have the expected working directory, " & workingDir & "."
+    error "New tab unexepectly has working directory /, suggesting that it was explicitly changed."
   end try
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  do script "exit" in selected tab
+  -- do script "exit" in selected tab
   set selected tab to thisTab # Re-select the previously active tab
   
 end tell
+
 
 return
 

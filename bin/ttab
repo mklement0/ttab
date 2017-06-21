@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.5.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.6.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -88,7 +88,9 @@ printScript=0 dryRun=0
 { [[ $1 == '--dry-run' ]] && { dryRun=1; shift; }; } || { [[ $1 == '--print-script' ]] && { printScript=1; shift; }; }
 
 # Parse options
+
 dirAbs=''
+doNotChangeDir=0
 tabTitle=''
 settingsName=''
 inBackground=0
@@ -111,7 +113,8 @@ while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* 
       ;;
     d)
       dir=$OPTARG
-      dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"
+      [[ -z $dir ]] && doNotChangeDir=1
+      (( doNotChangeDir )) || { dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"; }
       ;;
     a)
       terminalApp=$OPTARG
@@ -194,7 +197,7 @@ if (( inNewWin )); then # create the tab in a NEW WINDOW
         CMD_NEWTAB_1='create window with profile "'"$settingsName"'"'
       else
         CMD_NEWTAB_1='create window with default profile'
-      fi  
+      fi
       if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
         CMD_SAVE_ACTIVE_TAB='set prevWin to current window'
         CMD_REACTIVATE_PREV_TAB='tell application "System Events" to perform action "AXRaise" of window (name of prevWin) of application process "iTerm2"'
@@ -327,7 +330,7 @@ if (( iTerm || targetTermSpecified )); then
 else
     # While Terminal.app does default to the caller's current dir. when creating a tab
     # in the *current* window, it doesn't necessarily know the *immediate caller's* true $PWD,
-    # so we have to compensate for that""
+    # so we have to compensate for that:
     #   Terminal.app only knows the working directory of the *top-level* shell running in each tab (as it defines an aux. function,
     #   update_terminal_cwd(), that is called via $PROMPT_COMMAND every time the prompt is displayed).
     #   Thus, when this script is invoked inside another script, it is the *top-level* shell's working directory that is invariably used by
@@ -341,8 +344,8 @@ else
   fi
 fi
 
-  # Prepend the 'cd' command, if specified or needed.
-if [[ -n $dirAbs ]]; then
+# Prepend the 'cd' command, if specified or needed and unless suppress.
+if [[ $doNotChangeDir -eq 0 && -n $dirAbs ]]; then
   quotedCdCmd=$(printf 'cd %q' "$dirAbs")
   if [[ -n $quotedShellCmds ]]; then
     quotedShellCmds="$quotedCdCmd;$quotedShellCmds"
@@ -479,7 +482,8 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
     -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
-    -d <dir>            specify working directory
+    -d <dir>            specify working directory; -d '' disables inheriting
+                        the current dir.
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> ...           command to execute in the new tab
     "<cmd> ...; ..."    multi-command command line (passed as single operand)
@@ -541,7 +545,7 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
  * `-d <dir>`  
     explicitly specifies a working directory for the new tab; by default, the  
     invoking shell's working directory is inherited (even if `-w` is also  
-    specified).
+    specified) - use `-d ''` to disable.
 
  * `-q`  
     (*q*uiet) issues a `clear` command after opening the new tab.  

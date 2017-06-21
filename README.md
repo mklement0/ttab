@@ -106,7 +106,8 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
     -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
-    -d <dir>            specify working directory
+    -d <dir>            specify working directory; -d '' disables inheriting
+                        the current dir.
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> ...           command to execute in the new tab
     "<cmd> ...; ..."    multi-command command line (passed as single operand)
@@ -131,7 +132,7 @@ This project gratefully depends on the following open-source components, accordi
 ## npm dependencies
 
 * [doctoc (D)](https://github.com/thlorenz/doctoc)
-* [json (D)](https://github.com/trentm/json)
+* [json (D)](https://github.com/trentm/json#readme)
 * [marked-man (D)](https://github.com/kapouer/marked-man#readme)
 * [replace (D)](https://github.com/harthur/replace)
 * [semver (D)](https://github.com/npm/node-semver#readme)
@@ -145,6 +146,11 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.6.0](https://github.com/mklement0/ttab/compare/v0.5.1...v0.5.2)** (2017-06-21):
+  * [enhancement] `-d ''` now prevents `ttab` from implicitly changing to what
+    it thinks the working directory should be; useful for creating tabs/windows
+    that set their own working directory.
 
 * **[v0.5.1](https://github.com/mklement0/ttab/compare/v0.5.0...v0.5.1)** (2017-03-23):
   * [doc] Sample command fixed.

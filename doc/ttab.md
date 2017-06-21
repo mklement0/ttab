@@ -14,7 +14,8 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
     -q                  clear the new tab's screen
     -g                  create tab in background (don't activate Terminal/iTerm)
     -G                  create tab in background and don't activate new tab
-    -d <dir>            specify working directory
+    -d <dir>            specify working directory; -d '' disables inheriting
+                        the current dir.
     -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
     <cmd> ...           command to execute in the new tab
     "<cmd> ...; ..."    multi-command command line (passed as single operand)
@@ -76,7 +77,7 @@ Precede `exit` with `read -rsn 1` to wait for a keystroke first.
  * `-d <dir>`  
     explicitly specifies a working directory for the new tab; by default, the  
     invoking shell's working directory is inherited (even if `-w` is also  
-    specified).
+    specified) - use `-d ''` to disable.
 
  * `-q`  
     (*q*uiet) issues a `clear` command after opening the new tab.  

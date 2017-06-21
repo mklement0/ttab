@@ -4,6 +4,11 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.6.0](https://github.com/mklement0/ttab/compare/v0.5.1...v0.5.2)** (2017-06-21):
+  * [enhancement] `-d ''` now prevents `ttab` from implicitly changing to what
+    it thinks the working directory should be; useful for creating tabs/windows
+    that set their own working directory.
+
 * **[v0.5.1](https://github.com/mklement0/ttab/compare/v0.5.0...v0.5.1)** (2017-03-23):
   * [doc] Sample command fixed.
   * [dev] Reliability of tests improved.

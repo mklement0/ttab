@@ -2,7 +2,7 @@
 
 # Note: For most tests, we create the new tab in the front window, both because that is ttab's core feature (a simple `do script` without a target will open a tab in a new window).
 #       Also, opening new tabs in the front window is less visually disruptive.
-#       Note that while the tests terminate the new tab's shell, the tab may stay open, depending on its settings.
+#       Note that while the tests terminate the new tab's shell, the tab itself may stay open, depending on its settings.
 
 tell application "Terminal"'s front window
     
@@ -22,9 +22,14 @@ tell application "Terminal"'s front window
   my waitUntilTerminalTabNotBusy(selected tab, 3)
 
   do script "pwd >/tmp/_ttab_test_tmpout" in it
+
+  # !! `do script` is apparently asynchronous, so we must wait a little 
+  # !! to give the above command time to execute.  
+  delay 1
+
   
   try
-    do shell script "[[ $(</tmp/_ttab_test_tmpout) == '" & workingDir & "' ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"
+    do shell script "[[ $(</tmp/_ttab_test_tmpout) == " & quoted form of workingDir & " ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"  
   on error
     set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
     error "New tab (open in separate window) did not inherit the expected working directory, " & workingDir & "."
@@ -51,6 +56,5 @@ on waitUntilTerminalTabNotBusy(tabTarget, timeoutSecs)
       delay 0.1
       set elapsedSoFar to elapsedSoFar + 0.1
     end repeat
-    delay 1 # just for good measure - apparently, `busy` sometimes prematurely reports false
   end tell
 end waitUntilTerminalTabNotBusy
