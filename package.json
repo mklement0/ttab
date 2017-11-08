@@ -2,7 +2,7 @@
   "name": "ttab",
   "description": "OSX CLI for opening a new terminal tab/window, optionally with a command to execute and/or display settings",
   "private": false,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "os": [
     "darwin"
   ],

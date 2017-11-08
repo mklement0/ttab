@@ -14,6 +14,10 @@ and therefore lots of FLASHING - throughout running the whole suite of tests.
 INDIVIDUAL TESTS MAY FAIL *INTERMITTENTLY*.
 When in doubt, run failing tests INDIVIDUALLY to see if they succeed.
 
+!! Due to using a *.scpt file (utils.scpt) - which we need in order to be able
+!! to use `load script` - and the *.scpt file having been compiled on 
+!! macOS 10.13 (High Sierra), the tests will NOT run on earlier versions.
+
 ====
 EOF
 
