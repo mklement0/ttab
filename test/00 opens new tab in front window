@@ -6,22 +6,26 @@
 
 set ttabBin to "../bin/ttab"
 
-tell application "Terminal"'s front window
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
+tell application "Terminal"
     
-  set tabCountBefore to count of tabs
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
 
   # Create tab.
   do shell script ttabBin
 
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not util's getTabCount() > tabCountBefore then error "Failed to create tab in front window."
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  do script "exit" in selected tab
-  set selected tab to thisTab # Re-select the previously active tab
+  do script "exit" in util's getActiveTab()
+
+  # Re-select the previously active tab
+  util's setActiveTab(thisTab)
 
 end tell
 
 return
-

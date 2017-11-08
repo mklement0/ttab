@@ -4,22 +4,25 @@
 #       Also, opening new tabs in the front window is less visually disruptive.
 #       Note that while the tests terminate the new tab's shell, the tab itself may stay open, depending on its settings.
 
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
 tell application "Terminal"'s front window
     
-  set tabCountBefore to count of tabs
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
   
   set workingDir to "/Library/Application Support"
   
   # Create tab
   do shell script "ttabBin=\"$PWD/../bin/ttab\"; cd " & quoted form of workingDir & " && \"$ttabBin\""
   
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not (util's getTabCount()) > tabCountBefore then error "Failed to create tab in front window."
   
   # Ensure that the desired working directory has been inherited.
 
   # Wait till tab has finished starting up.
-  my waitUntilTerminalTabNotBusy(selected tab, 3)
+  util's waitUntilTerminalTabNotBusy(it, 3)
 
   do script "pwd >/tmp/_ttab_test_tmpout" in it
 
@@ -31,30 +34,15 @@ tell application "Terminal"'s front window
   try
     do shell script "[[ $(</tmp/_ttab_test_tmpout) == " & quoted form of workingDir & " ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"  
   on error
-    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
+    util's setActiveTab(thisTab) # Re-select the previously active tab so that the error message shows.
     error "New tab (open in separate window) did not inherit the expected working directory, " & workingDir & "."
   end try
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  do script "exit" in selected tab
-  set selected tab to thisTab # Re-select the previously active tab
+  do script "exit" in util's getActiveTab()
+  util's setActiveTab(thisTab) # Re-select the previously active tab
   
 end tell
 
 return
-
-
-on waitUntilTerminalTabNotBusy(tabTarget, timeoutSecs)
-  local elapsedSoFar
-  set elapsedSoFar to 0
-  tell application "Terminal"
-    repeat while (busy of tabTarget)
-      if elapsedSoFar ≥ timeoutSecs then
-        error "Terminal tab '" & (name of tab) & "' is unexpectedly still busy after " & timeoutSecs & " seconds."
-      end if
-      delay 0.1
-      set elapsedSoFar to elapsedSoFar + 0.1
-    end repeat
-  end tell
-end waitUntilTerminalTabNotBusy

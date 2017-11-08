@@ -6,30 +6,32 @@
 
 set ttabBin to "../bin/ttab"
 
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
 tell application "Terminal"'s front window
     
-  set tabCountBefore to count of tabs
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
 
   set customTitle to "custom title"
 
   # Create tab with custom title.
   do shell script ttabBin & " -t " & quoted form of customTitle
 
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not (util's getTabCount()) > tabCountBefore then error "Failed to create tab in front window."
 
   # Ensure that the desired title has been set
   if custom title of selected tab ≠ customTitle then    
-    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
+    util's setActiveTab(thisTab) # Re-select the previously active tab so that the error message shows.
     error "New tab doesn't have the expected custom title, " & customTitle & "."
   end if
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  do script "exit" in selected tab
-  set selected tab to thisTab # Re-select the previously active tab
+  do script "exit" in util's getActiveTab()
+  util's setActiveTab(thisTab) # Re-select the previously active tab
 
 end tell
 
 return
-

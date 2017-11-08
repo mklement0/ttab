@@ -4,12 +4,22 @@ ttabBin="../bin/ttab"
 
 [[ -d /Applications/iTerm.app ]] || { echo "WARNING: Cannot test option -a, because iTerm2 appears not to be installed." >&2; exit 0; }
 
+activeTerminal() {
+  osascript -e 'tell application "Terminal.app" to activate'
+}
+
 numWinsBefore=$(osascript -e 'tell application "iTerm.app" to count windows')
 
 "$ttabBin" -a iTerm2 -w echo "Hi!"
 
 numWinsAfter=$(osascript -e 'tell application "iTerm.app" to count windows')
 
-(( numWinsAfter == numWinsBefore + 1 )) || { echo "Expected to find $(( numWinsBefore + 1 )) windows, but found $numWinsAfter" >&2; exit 1; }
+(( numWinsAfter == numWinsBefore + 1 )) || { echo "Expected to find $(( numWinsBefore + 1 )) windows, but found $numWinsAfter" >&2; activateTerminal; exit 1; }
+
+# Close the newly created iTerm.app window...
+osascript -e 'tell application "iTerm.app" to close front window'
+
+# ... and reativate Terminal.app.
+activeTerminal
 
 exit 0

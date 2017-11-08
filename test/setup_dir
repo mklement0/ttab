@@ -10,6 +10,10 @@ cat <<EOF >&2
 NOTE: The test scripts will perform GUI scripting. 
 EXPECT SIMULATED USER ACTIVITY - such as creating new tabs and windows - 
 and therefore lots of FLASHING - throughout running the whole suite of tests.
+
+INDIVIDUAL TESTS MAY FAIL *INTERMITTENTLY*.
+When in doubt, run failing tests INDIVIDUALLY to see if they succeed.
+
 ====
 EOF
 

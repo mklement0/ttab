@@ -6,21 +6,24 @@
 
 set ttabBin to "../bin/ttab"
 
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
 tell application "Terminal"'s front window
     
-  set tabCountBefore to count of tabs
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
 
   set settingsName to "ocean"
 
   # Create tab with settings.
   do shell script ttabBin & " -s " & quoted form of settingsName
 
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not (util's getTabCount()) > tabCountBefore then error "Failed to create tab in front window."
 
   # Ensure that the desired settings are in effect.
   if name of (current settings of selected tab) ≠ settingsName then
-    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
+    util's setActiveTab(thisTab) # Re-select the previously active tab so that the error message shows.
     error "New tab doesn't have the expected settings, " & settingsName & "."
   end if
 
@@ -28,8 +31,9 @@ tell application "Terminal"'s front window
   # because it waits for the tab to be ready to process the command.
   # !! The default of most settings is to leave the tab open on termination of the shell, so unless you change that, thisTab
   # !! test will leave the tab open. 
-  do script "exit" in selected tab
-  set selected tab to thisTab # Re-select the previously active tab
+  do script "exit" in util's getActiveTab()
+
+  util's setActiveTab(thisTab) # Re-select the previously active tab
 
 end tell
 

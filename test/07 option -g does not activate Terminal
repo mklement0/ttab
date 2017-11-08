@@ -2,28 +2,30 @@
 
 set ttabBin to "../bin/ttab"
 
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
 # 1st test: create tab in *front* window and ensure that Terminal doesn't activate (technically: stay activated) in the process.
 tell application "Terminal"'s front window
     
-  set tabCountBefore to count of tabs
-  set thisWin to it
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
 
-  my syncActivate("Finder")
+  util's syncActivate("Finder")
 
   # Create tab without activating Terminal.
   do shell script ttabBin & " -g"
 
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not (util's getTabCount()) > tabCountBefore then error "Failed to create tab in front window."
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  do script "exit" in selected tab
+  do script "exit" in util's getActiveTab()
 
   delay 1 # give some time for the required temporary activation of Terminal to pass
   set ok to not frontmost of application "Terminal"
 
-  set selected tab to thisTab # Re-select the previously active tab
+  util's setActiveTab(thisTab) # Re-select the previously active tab
 
   if not ok then
     activate application "Terminal"
@@ -37,9 +39,7 @@ tell application "Terminal"
     
   set winCountBefore to count of windows
 
-  set thisWin to front window
-
-  my syncActivate("Finder")
+  util's syncActivate("Finder")
 
   # Create tab in a new window without activating Terminal.
   do shell script ttabBin & " -w -g"
@@ -51,7 +51,7 @@ tell application "Terminal"
 
   # Close the new window, but we must wait for its shell to no longer be busy so as to avoid a 'really close?' prompt.
   activate it
-  my closeTerminalWindow(front window, 3)
+  util's closeTerminalWindow(front window, 3)
 
   if not ok then
     activate application "Terminal"
@@ -61,41 +61,3 @@ tell application "Terminal"
 end tell
 
 return
-
-
-# Synchronously activate the specified application. I.e., when this subroutine returns, the specified app is frontmost.
-# Required, because on 10.10+ the activate command is *asynchronous*.
-# Set TMOUT to adjust the timeout after which an error is raised.
-on syncActivate(appName)
-  local TMOUT, elapsedSoFar
-  set TMOUT to 5 # secs.
-  set elapsedSoFar to 0
-  tell application appName
-    activate
-    repeat while not frontmost
-      if elapsedSoFar > TMOUT then error "'" & appName & "' failed to activate within " & TMOUT & " seconds."
-      delay 0.1
-      set elapsedSoFar to elapsedSoFar + 0.1
-    end repeat
-  end tell
-end syncActivate
-
-# Closes a Terminal window after waiting for it to no longer be busy.
-# Times out with an error after the specified number of seconds.
-# The raison d'être for this handler is that blindly trying to close a Terminal window that's running a process (other than the shell) will result in an asynchronous, interactive 'really close?' prompt.
-# !! Seemingly, a tab's `busy` property mistakenly always reports false when Terminal is not frontmost.
-on closeTerminalWindow(win, timeoutSecs)
-  local elapsedSoFar
-  set elapsedSoFar to 0
-  tell application "Terminal"
-    repeat while (busy of selected tab of win)
-      if elapsedSoFar ≥ timeoutSecs then
-        error "Terminal window '" & (name of win) & "' is unexpectedly still busy after " & timeoutSecs & " seconds."
-      end if
-      delay 0.1
-      set elapsedSoFar to elapsedSoFar + 0.1
-    end repeat
-    delay 1 # just for good measure - apparently, `busy` sometimes prematurely reports false
-    close win
-  end tell
-end closeTerminalWindow

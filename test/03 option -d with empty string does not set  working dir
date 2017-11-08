@@ -7,10 +7,13 @@
 # Determine the absolute path of `ttab`, because we'll be changing the working dir. before invoking it.
 set ttabBin to (system attribute "PWD") & "/../bin/ttab"
 
+# Load the utility script.
+set util to load script (do shell script "dirname -- " & quoted form of POSIX path of (path to me)) & "/.fixtures/utils.scpt"
+
 tell application "Terminal"'s front window
     
-  set tabCountBefore to count of tabs
-  set thisTab to selected tab
+  set tabCountBefore to util's getTabCount()
+  set thisTab to util's getActiveTab()
     
   # Inside a *subshell*, change to /, then create a tab requesting not to change the working dir.
   # Without -d '', ttab would normally change to / (via an explicitly issued `cd` command), but
@@ -18,10 +21,10 @@ tell application "Terminal"'s front window
   # changed it to.
   do shell script "(cd / && " & ttabBin & " -d '')"
   
-  if not (count of tabs) > tabCountBefore then error "Failed to create tab in front window."
+  if not (util's getTabCount()) > tabCountBefore then error "Failed to create tab in front window."
   
   # Wait till tab has finished starting up.
-  my waitUntilTerminalTabNotBusy(it, 3)
+  util's waitUntilTerminalTabNotBusy(it, 3)
 
   do script "pwd >/tmp/_ttab_test_tmpout" in selected tab
 
@@ -33,31 +36,17 @@ tell application "Terminal"'s front window
     # We expect the new tab's $PWD *not* to be /
     do shell script "[[ $(</tmp/_ttab_test_tmpout) != / ]]; ec=$?; rm -f /tmp/_ttab_test_tmpout; exit $ec"
   on error
-    set selected tab to thisTab # Re-select the previously active tab so that the error message shows.
-    error "New tab unexepectly has working directory /, suggesting that it was explicitly changed."
+    util's setActiveTab(thisTab) # Re-select the previously active tab so that the error message shows.
+    error "New tab unexpectly has working directory /, suggesting that it was explicitly changed."
   end try
 
   # Tabs don't understand `close`, but `do script "exit"` is preferable anyway (assuming the settings close the tab once the shell exits),
   # because it waits for the tab to be ready to process the command.
-  -- do script "exit" in selected tab
-  set selected tab to thisTab # Re-select the previously active tab
+  do script "exit" in util's getActiveTab()
+
+  util's setActiveTab(thisTab) # Re-select the previously active tab
   
 end tell
 
 
 return
-
-
-on waitUntilTerminalTabNotBusy(tabTarget, timeoutSecs)
-  local elapsedSoFar
-  set elapsedSoFar to 0
-  tell application "Terminal"
-    repeat while (busy of tabTarget)
-      if elapsedSoFar ≥ timeoutSecs then
-        error "Terminal tab '" & (name of tab) & "' is unexpectedly still busy after " & timeoutSecs & " seconds."
-      end if
-      delay 0.1
-      set elapsedSoFar to elapsedSoFar + 0.1
-    end repeat
-  end tell
-end waitUntilTerminalTabNotBusy
