@@ -18,7 +18,6 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-
 # ttab &mdash; open a new Terminal.app / iTerm2.app tab or window
 
 A [macOS (OS X)](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal`, 
@@ -32,6 +31,16 @@ Note: `iTerm2` support is experimental in that it is currently not covered by th
 **Important**: Irrespective of installation method, `Terminal` / `iTerm2` (`iTerm.app`) needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` / `iTerm.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
+
+## Installation via Homebrew
+
+With [Homebrew](https://brew.sh/) installed, run the following:
+
+```sh
+brew install https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb
+```
+
+<sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula.</sup>
 
 ## Installation from the npm registry
 
