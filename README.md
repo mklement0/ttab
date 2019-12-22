@@ -7,6 +7,7 @@
 
 - [ttab &mdash; open a new Terminal.app / iTerm2.app tab or window](#ttab-&mdash-open-a-new-terminalapp--iterm2app-tab-or-window)
 - [Installation](#installation)
+  - [Installation via Homebrew](#installation-via-homebrew)
   - [Installation from the npm registry](#installation-from-the-npm-registry)
   - [Manual installation](#manual-installation)
 - [Examples](#examples)
@@ -25,12 +26,11 @@ or in popular alternative [`iTerm2`](http://www.iterm2.com/), optionally with a 
 
 Note: `iTerm2` support is experimental in that it is currently not covered by the automated tests run before every release.
 
-
 # Installation
 
 **Important**: Irrespective of installation method, `Terminal` / `iTerm2` (`iTerm.app`) needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` / `iTerm.app` is in the list on the right and has a checkmark.  
-For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802)
+For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802).
 
 ## Installation via Homebrew
 
