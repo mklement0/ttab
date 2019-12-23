@@ -128,7 +128,7 @@ Standard options: --help, --man, --version, --home
 
 # License
 
-Copyright (c) 2015-2017 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
+Copyright (c) 2015-2019 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
 
 ## Acknowledgements
 
@@ -158,6 +158,7 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 * **[v0.6.1](https://github.com/mklement0/ttab/compare/v0.6.0...v0.6.1)** (2017-11-08):
   * [fix] macOS 10.13 (High Sierra compatibility), which makes `-G` work again.
+  * [installation] Homebrew formula added (added post-release, on 2019-12-22).
 
 * **[v0.6.0](https://github.com/mklement0/ttab/compare/v0.5.1...v0.5.2)** (2017-06-21):
   * [enhancement] `-d ''` now prevents `ttab` from implicitly changing to what
