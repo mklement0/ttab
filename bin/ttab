@@ -27,7 +27,7 @@ printManPageSource() {
 
 # Opens the man page, if installed; otherwise, tries to display the embedded Markdown-formatted man-page source; if all else fails: tries to display the man page online.
 openManPage() {
-  local pager embeddedText 
+  local pager embeddedText
   if ! man 1 "$kTHIS_NAME" 2>/dev/null; then
     # 2nd attempt: if present, display the embedded Markdown-formatted man-page source
     embeddedText=$(printManPageSource)
@@ -38,7 +38,7 @@ openManPage() {
     else # 3rd attempt: open the the man page on the utility's website
       openUrl "${kTHIS_HOMEPAGE}/doc/${kTHIS_NAME}.md"
     fi
-  fi  
+  fi
 }
 
 # Prints the contents of the synopsis chapter of the embedded Markdown-formatted man-page source for quick reference.
@@ -102,7 +102,7 @@ inBackground=0
 targetTermSpecified=0
 inNewWin=0
 cls=0
-terminalApp="$TERM_PROGRAM"   # default to the terminal program that is running this script 
+terminalApp="$TERM_PROGRAM"   # default to the terminal program that is running this script
 while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
   [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
   [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
@@ -123,7 +123,7 @@ while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* 
       ;;
     a)
       terminalApp=$OPTARG
-      targetTermSpecified=1      
+      targetTermSpecified=1
       ;;
     g)
       inBackground=1
@@ -145,6 +145,7 @@ shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
 # Determine the terminal application that was explicitly specified or happens to be running this script.
 # Currently, the only programs supported are the standard Terminal.app and iTerm.app (iTerm2).
+gnomeTerminal=0
 iTerm=0
 shopt -s nocasematch  # we want to match the application name case-INSensitively.
 case $terminalApp in
@@ -156,22 +157,30 @@ case $terminalApp in
     # Note: 'iTerm.app' is what $TERM_PROGRAM contains when running from iTerm.app
     iTerm=1
     ;;
+  'gnome-terminal')
+    gnomeTerminal=1
+    ;;
   *)
     # If an unknown terminal is specified, we issue a warning and fall back to Terminal.app
-    echo "WARNING: '$terminalApp' is not a supported terminal application; defaulting to Terminal.app." >&2    
+    echo "WARNING: '$terminalApp' is not a supported terminal application; defaulting to Terminal.app." >&2
     ;;
 esac
 shopt -u nocasematch
 
-# Set target-terminal-app-appropriate variables used later. 
+# Set target-terminal-app-appropriate variables used later.
 if (( iTerm )); then
   terminalApp='iTerm' # will be used with `activate application`
   # Note: iTerm2's AppleScript syntax changed fundamentally in v3 (for the better, but incompatibly so),
-  #       so we need to distinguish versions below. 
+  #       so we need to distinguish versions below.
   #       $iTermOld reflects a pre-v3 version.
   [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0
-else # Terminal.app
-  terminalApp='Terminal' # will be used with `activate application`
+else
+  if [ -n "$COLORTERM" ]; then
+    terminalApp='gnome-terminal'
+    gnomeTerminal=1
+  else # Terminal.app
+    terminalApp='Terminal' # will be used with `activate application`
+  fi
 fi
 
 # To be safe, clear any pre-existing variables with names matching those we'll be using below.
@@ -185,11 +194,13 @@ for n in ${!CMD_*}; do unset $n; done
   #           In the default case, the GUI scripting finds the command by its keyboard shortcut so as to work locale-independently; it does, however, make the following assumptions (other than the pretty safe assumption that the command is in the 3rd menu from the left, the "Shell" menu in English):
   #       (b) it also allows us to create new tabs *with specific settings*, by finding the menu item by *name* (settings names are locale-*in*dependent, fortunately)
   #           Using this is preferable to trying to apply settings *after* tab creation with `set current settings of selected tab ...`, as the latter only applies *visual* attributes, not *behavioral* (such as what to do when the shell exits)
-  
+
 if (( inNewWin )); then # create the tab in a NEW WINDOW
 
-  if (( iTerm )); then
-  
+  if   (( gnomeTerminal )); then
+    CMD_NEWTAB_1='--window'
+  elif (( iTerm )); then
+
     if (( iTermOld )); then # OLD iTerm syntax (v2-)
       # Note: Passing an empty $settingsName is accepted as specifying the default profile.
       CMD_NEWTAB_1='tell application "iTerm" to launch (make new terminal) session "'"$settingsName"'"'
@@ -209,29 +220,30 @@ if (( inNewWin )); then # create the tab in a NEW WINDOW
         CMD_REACTIVATE_PREV_TAB='tell application "System Events" to perform action "AXRaise" of window (name of prevWin) of application process "iTerm2"'
       fi
     fi
-    
   else # Terminal.app
-  
+
     if [[ -n $settingsName ]]; then
       CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 1 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click menu item "'"$settingsName"'"'
       CMD_NEWTAB_2='set newTab to selected tab of front window'
     else
       CMD_NEWTAB_1=''
       CMD_NEWTAB_2='set newTab to do script' # note that running `do script` without arguments (i.e., without a suffix specifying the target window (e.g., 'in front window')) creates a *new* window.
-    fi  
+    fi
     if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within Terminal
       CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
       CMD_REACTIVATE_PREV_TAB='set frontmost of prevWin to true' # Note that while  *Terminal.app*'s  windows have a `frontmost` property that allows their activation within the app, most other (all other?) apps' windows do not.
     fi
-    
+
   fi
-  
+
 else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
 
-  if (( iTerm )); then
-  
+  if   (( gnomeTerminal )); then
+    CMD_NEWTAB_1='--tab'
+  elif (( iTerm )); then
+
     if (( iTermOld )); then # OLD iTerm syntax (v2-)
-      # Note: Passing an empty $settingsName is accepted as specifying the default profile.    
+      # Note: Passing an empty $settingsName is accepted as specifying the default profile.
       CMD_NEWTAB_1='tell application "iTerm" to launch (current terminal) session "'"$settingsName"'"'
       if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
         CMD_SAVE_ACTIVE_TAB='set prevSess to current session of current terminal'
@@ -242,15 +254,15 @@ else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with n
         CMD_NEWTAB_1='tell current window to create tab with profile "'"$settingsName"'"'
       else
         CMD_NEWTAB_1='tell current window to create tab with default profile'
-      fi  
+      fi
       if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within iTerm
         CMD_SAVE_ACTIVE_TAB='set prevTab to current tab of current window'
         CMD_REACTIVATE_PREV_TAB='select prevTab'
       fi
     fi
-    
+
   else # Terminal.app
-  
+
     if [[ -n $settingsName ]]; then
         CMD_NEWTAB_1='tell application "System Events" to tell menu 1 of menu item 2 of menu 1 of menu bar item 3 of menu bar 1 of application process "Terminal" to click menu item "'"$settingsName"'"'
     else
@@ -267,7 +279,7 @@ else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with n
         CMD_REACTIVATE_PREV_TAB='set selected of prevTab to true'
       fi
     fi
-    
+
   fi
 
 fi
@@ -278,8 +290,8 @@ fi
   #     in order for GUI scripting to work correctly, with the previously active
   #     application getting reactivated afterward.
   #   * With foregound operation, we also activate explicitly, so as to support
-  #     invocation from helper apps such as Alfred where the terminal may be 
-  #     created implicitly and not gain focus by default. 
+  #     invocation from helper apps such as Alfred where the terminal may be
+  #     created implicitly and not gain focus by default.
   # !! On 10.10+, activate is no longer *synchronous*, so we must wait until Terminal is truly activated (frontmost)
 CMD_ACTIVATE='if not frontmost then
   activate
@@ -289,9 +301,18 @@ CMD_ACTIVATE='if not frontmost then
 end if'
 
     # For use with -g and -G: commands for saving and restoring the previous application
+CMD_KEEP_TAB_OPEN="$SHELL"
+CMD_SWITCH_TO="--active"
 if (( inBackground )); then
-  CMD_SAVE_ACTIVE_APPNAME='set prevAppPath to path to frontmost application as text'
-  CMD_REACTIVATE_PREV_APP='activate application prevAppPath'
+  if (( gnomeTerminal )); then
+    if (( inBackground == 2 )); then
+     CMD_KEEP_TAB_OPEN=''
+    fi
+    CMD_SWITCH_TO=''
+  else
+    CMD_SAVE_ACTIVE_APPNAME='set prevAppPath to path to frontmost application as text'
+    CMD_REACTIVATE_PREV_APP='activate application prevAppPath'
+  fi
 fi
 
   # Optional commands that are only used if the relevant options were specified.
@@ -299,7 +320,7 @@ quotedShellCmds=''
 shellCmdTokens=( "$@" )
 if (( ${#shellCmdTokens[@]} )); then # Shell command(s) specified.
 
-  if (( ${#shellCmdTokens[@]} == 1 )); then # Could be a mere command name like 'ls' or a multi-command string such as 'git bash && git status' 
+  if (( ${#shellCmdTokens[@]} == 1 )); then # Could be a mere command name like 'ls' or a multi-command string such as 'git bash && git status'
     # If only a single string was specified as the command to execute in the new tab:
     # It could either be a *mere command name* OR a *quoted string containing MULTIPLE commands*.
     # We use `type` to determine if it is a mere command name / executable in the
@@ -338,7 +359,7 @@ fi # if (( ${#shellCmdTokens[@]} )
 #         * When opening a new in the current window,
 #             * Terminal: the *caller's currrent dir., as known to Terminal* (see below) is used.
 #       Also, to be safe, if a target terminal is explicitly specified, we also
-#       default to issuing a `cd` command, because it might be a different terminal than the current one.  
+#       default to issuing a `cd` command, because it might be a different terminal than the current one.
 if (( iTerm || targetTermSpecified )); then
   # iTerm2 always defaults to the home dir., so we must always add an explicit `cd` command to ensure that the current dir. is used.
   if [[ -z $dirAbs ]]; then
@@ -354,7 +375,7 @@ else
     #   Terminal, even if the invoking script has changed the working directory. Since this is counter-intuitive, we compensate here
     #   by explicitly setting the working directory to the invoking script's with a prepended 'cd' command.
     #   $SHLVL tells us the nesting level of the current shell:
-    #   1 == top-level shell; since this script itself runs in a subshell (2, if invoked directly from the top-level shell), we can safely assume 
+    #   1 == top-level shell; since this script itself runs in a subshell (2, if invoked directly from the top-level shell), we can safely assume
     #   that another *script* has invoked us, if $SHLVL >= 3.
   if [[ -z $dirAbs && ($SHLVL -ge 3 || $inNewWin -eq 1) ]]; then
     dirAbs=$PWD
@@ -389,7 +410,9 @@ if [[ -n $quotedShellCmds ]]; then
   #  - embedded double quotes must be backlash-escaped
   quotedShellCmdsForAppleScript=${quotedShellCmds//\\/\\\\}
   quotedShellCmdsForAppleScript=${quotedShellCmdsForAppleScript//\"/\\\"}
-  if (( iTerm )); then
+  if (( gnomeTerminal )); then
+    CMD_CUSTOM="$quotedShellCmds ;"
+  elif (( iTerm )); then
     if (( iTermOld )); then # OLD iTerm syntax (v2-)
       CMD_CUSTOM="write (current session of current terminal) text \"${quotedShellCmdsForAppleScript}\""
     else # NEW iTerm syntax (introduced in v3)
@@ -406,7 +429,9 @@ if [[ -n $tabTitle ]]; then # custom tab title specified
   #  - embedded double quotes must be backlash-escaped
   tabTitle=${tabTitle//\\/\\\\}
   tabTitle=${tabTitle//\"/\\\"}
-  if (( iTerm )); then
+  if (( gnomeTerminal )); then
+    CMD_TITLE="-t \"$tabTitle\""
+  elif (( iTerm )); then
     if (( iTermOld )); then # OLD iTerm syntax (v2-)
       CMD_TITLE="tell current session of current terminal to set name to \"$tabTitle\""
     else # NEW iTerm syntax (introduced in v3)
@@ -416,6 +441,11 @@ if [[ -n $tabTitle ]]; then # custom tab title specified
     CMD_TITLE="set custom title of newTab to \"$tabTitle\""
   fi
 fi
+
+if (( gnomeTerminal )); then
+  script="$terminalApp $CMD_NEWTAB_1 $CMD_SWITCH_TO $CMD_TITLE -- $SHELL -c '$CMD_CUSTOM $CMD_KEEP_TAB_OPEN'"
+  echo $script
+else
 
 # Now, synthesize the entire AppleScript
 # !! At least on 10.10, the commands to save the active application and to reactivate it later must be OUTSIDE of the tell application "Terminal" block to work.
@@ -434,13 +464,19 @@ $CMD_REACTIVATE_PREV_APP
 return
 EOF
 
+fi
+
 (( dryRun || printScript )) && { printf %s "$script"; (( dryRun )) && exit; }
 
 # Execute the synthesized AppleScript.
-# Note: By using `exec` we pass `osascript`'s exit code through and 
-#       END EXECUTION HERE, so that that the `: <<...` here-doc for the man page 
+# Note: By using `exec` we pass `osascript`'s exit code through and
+#       END EXECUTION HERE, so that that the `: <<...` here-doc for the man page
 #       below doesn't reset the exit code to 0.
-exec osascript <<<"$script"
+if (( gnomeTerminal )); then
+  eval $script
+else
+  exec osascript <<<"$script"
+fi
 
 ####
 # MAN PAGE MARKDOWN SOURCE
@@ -458,7 +494,7 @@ exec osascript <<<"$script"
 #     - For better plain-text rendering, leave an empty line after a heading.
 #       marked-man will remove it from the ROFF version.
 #     - The first heading must be a level-1 heading containing the utility
-#       name and very brief description; append the manual-section number 
+#       name and very brief description; append the manual-section number
 #       directly to the CLI name; e.g.:
 #         # foo(1) - does bar
 #     - The 2nd, level-2 heading must be '## SYNOPSIS' and the chapter's body
@@ -469,7 +505,7 @@ exec osascript <<<"$script"
 #         in angle brackets; e.g., '<foo>'
 #     - All other headings should be level-2 headings in ALL-CAPS.
 #   - TEXT
-#      - Use NO indentation for regular chapter text; if you do, it will 
+#      - Use NO indentation for regular chapter text; if you do, it will
 #        be indented further than list items.
 #      - Use 4-space indentation, as usual, for code blocks.
 #      - Markup character-styling markup translates to ROFF rendering as follows:
@@ -501,7 +537,7 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
     -G                  create tab in background and don't activate new tab
     -d <dir>            specify working directory; -d '' disables inheriting
                         the current dir.
-    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
+    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2
     <cmd> ...           command to execute in the new tab
     "<cmd> ...; ..."    multi-command command line (passed as single operand)
 
@@ -509,109 +545,109 @@ Standard options: `--help`, `--man`, `--version`, `--home`
 
 ## DESCRIPTION
 
-`ttab` opens a new Terminal or iTerm2 tab with a variety of options,  
-including executing a command in the new tab, assigning a title and working  
+`ttab` opens a new Terminal or iTerm2 tab with a variety of options,
+including executing a command in the new tab, assigning a title and working
 directory, and opening the tab in a new window.
 
-Note: iTerm2 support is experimental in that it is currently not covered by  
+Note: iTerm2 support is experimental in that it is currently not covered by
 the automated tests run before every release.
 
-IMPORTANT: **Terminal/iTerm2 must be allowed assistive access** in order  
-for this  utility to work, which requires one-time authorization with  
-administrative privileges. If you get error messages instead of being prompted,  
-authorize the application via  
+IMPORTANT: **Terminal/iTerm2 must be allowed assistive access** in order
+for this  utility to work, which requires one-time authorization with
+administrative privileges. If you get error messages instead of being prompted,
+authorize the application via
 System Preferences > Security & Privacy > Privacy > Accessibility.
 
-The new tab will run a login shell (i.e., load the user's shell profile)  
+The new tab will run a login shell (i.e., load the user's shell profile)
 and by default inherit the working directory from the parent shell.
 
-When specifying a command to execute in the new tab, quoted parameters are  
-handled properly and there's no need to quote the command as a whole,  
-provided it is a *single* command.  
-Prefix such a single command with `exec` to exit the shell after the command  
-terminates. If the tab's settings are configured to close tabs on termination  
+When specifying a command to execute in the new tab, quoted parameters are
+handled properly and there's no need to quote the command as a whole,
+provided it is a *single* command.
+Prefix such a single command with `exec` to exit the shell after the command
+terminates. If the tab's settings are configured to close tabs on termination
 of the shell, the tab will close automatically.
 
-To specify *multiple* commands, pass them as a *single, quoted  string*.  
-Use `exit` as the last command to automatically close the tab when the  
-command terminates, assuming the tab's settings are configured to close the  
-tab on termination of the shell.  
+To specify *multiple* commands, pass them as a *single, quoted  string*.
+Use `exit` as the last command to automatically close the tab when the
+command terminates, assuming the tab's settings are configured to close the
+tab on termination of the shell.
 Precede `exit` with `read -rsn 1` to wait for a keystroke first.
 
 ## OPTIONS
 
- * `-w`  
-    creates the new tab in a new window rather than in the front  
+ * `-w`
+    creates the new tab in a new window rather than in the front
     window.
 
- * `-s <settings>`  
-    specifies the settings set (profile) to apply to the new tab, determining  
-    the appearance and behavior of the new tab.  
-    o Terminal: settings sets are defined in Preferences > Profiles;  
-    name matching is case-*in*sensitive, and specifying nonexistent settings  
+ * `-s <settings>`
+    specifies the settings set (profile) to apply to the new tab, determining
+    the appearance and behavior of the new tab.
+    o Terminal: settings sets are defined in Preferences > Profiles;
+    name matching is case-*in*sensitive, and specifying nonexistent settings
     causes an error.
-    o iTerm2: profiles are defined in Preferences > Profiles; name matching  
+    o iTerm2: profiles are defined in Preferences > Profiles; name matching
     is case-*sensitive*, and specifying a nonexistent profile causes an error.
 
- * `-t <title>`   
-    specifies a custom title to assign to the new tab; otherwise, if a  
-    command is specified, its first token will become the new tab's title.  
-    CAVEAT: As of iTerm2 v3.0.9, choosing a title that exactly matches the  
+ * `-t <title>`
+    specifies a custom title to assign to the new tab; otherwise, if a
+    command is specified, its first token will become the new tab's title.
+    CAVEAT: As of iTerm2 v3.0.9, choosing a title that exactly matches the
     settings name specified with `-s` causes the title to be ignored.
 
- * `-d <dir>`  
-    explicitly specifies a working directory for the new tab; by default, the  
-    invoking shell's working directory is inherited (even if `-w` is also  
+ * `-d <dir>`
+    explicitly specifies a working directory for the new tab; by default, the
+    invoking shell's working directory is inherited (even if `-w` is also
     specified) - use `-d ''` to disable.
 
- * `-q`  
-    (*q*uiet) issues a `clear` command after opening the new tab.  
-    Note that output will temporarily be visible while the tab is being opened;  
-    also, clearing is not performed if any command passed reports an overall  
+ * `-q`
+    (*q*uiet) issues a `clear` command after opening the new tab.
+    Note that output will temporarily be visible while the tab is being opened;
+    also, clearing is not performed if any command passed reports an overall
     nonzero exit code, so as to allow failures to be examined.
 
- * `-g`  
-    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
-    frontmost application); within the application, however, the new tab will  
-    become the active tab; useful in scripts that launch other applications and  
+ * `-g`
+    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the
+    frontmost application); within the application, however, the new tab will
+    become the active tab; useful in scripts that launch other applications and
     don't want Terminal/iTerm2 to steal focus later.
 
- * `-G`  
-    causes Terminal/iTerm2 not to activate *and* the active element within  
-    the application not to change; i.e., the active window and tab stay the  
-    same. If Terminal/iTerm2 happens to be frontmost, the new tab will  
+ * `-G`
+    causes Terminal/iTerm2 not to activate *and* the active element within
+    the application not to change; i.e., the active window and tab stay the
+    same. If Terminal/iTerm2 happens to be frontmost, the new tab will
     effectively open in the background.
 
-NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /  
+NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /
       the new tab will still activate *briefly, temporarily* in most scenarios.
 
-* `-a Terminal` or `-a iTerm2`  
-    explicitly specifies the terminal application to use; by default, the   
-    terminal application from which this utility is run is implied, if  
-    supported, with Terminal used as the fallback.  
-    This options is useful for calling this utility from non-terminal  
+* `-a Terminal` or `-a iTerm2`
+    explicitly specifies the terminal application to use; by default, the
+    terminal application from which this utility is run is implied, if
+    supported, with Terminal used as the fallback.
+    This options is useful for calling this utility from non-terminal
     applications such as Alfred (https://www.alfredapp.com/).
 
 ## STANDARD OPTIONS
 
 All standard options provide information only.
 
- * `-h, --help`  
+ * `-h, --help`
     Prints the contents of the synopsis chapter to stdout for quick reference.
 
- * `--man`  
-    Displays this manual page, which is a helpful alternative to using `man`, 
+ * `--man`
+    Displays this manual page, which is a helpful alternative to using `man`,
     if the manual page isn't installed.
 
- * `--version`  
+ * `--version`
     Prints version information.
-    
- * `--home`  
+
+ * `--home`
     Opens this utility's home page in the system's default web browser.
 
 ## LICENSE
 
-For license information and more, visit this utility's home page by running  
+For license information and more, visit this utility's home page by running
 `ttab --home`.
 
 ## EXAMPLES
@@ -623,19 +659,19 @@ For license information and more, visit this utility's home page by running
     ttab -w
 
     # Open new tab with title 'Green' using settings (profile) 'Grass':
-    ttab -t Green -s Grass  
+    ttab -t Green -s Grass
 
     # Open new tab and execute a command in it:
     ttab ls -l "$HOME/Library/Application Support"
 
     # Open new tab with specified working dir. and execute a command in it:
     ttab -d "$HOME/Library/Application Support" ls -l
-    
+
     # Execute a command and exit.
     # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
-    
-    # Pass a multi-command string as a single, quoted string, wait for a  
+
+    # Pass a multi-command string as a single, quoted string, wait for a
     # keystroke, then exit.
     ttab 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
