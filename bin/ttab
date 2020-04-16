@@ -195,6 +195,12 @@ for n in ${!CMD_*}; do unset $n; done
   #       (b) it also allows us to create new tabs *with specific settings*, by finding the menu item by *name* (settings names are locale-*in*dependent, fortunately)
   #           Using this is preferable to trying to apply settings *after* tab creation with `set current settings of selected tab ...`, as the latter only applies *visual* attributes, not *behavioral* (such as what to do when the shell exits)
 
+if (( gnomeTerminal )); then
+  if [ -n "$settingsName" ]; then
+    CMD_SET_PROFILE="--profile='${settingsName}'"
+  fi
+fi
+
 if (( inNewWin )); then # create the tab in a NEW WINDOW
 
   if   (( gnomeTerminal )); then
@@ -443,8 +449,7 @@ if [[ -n $tabTitle ]]; then # custom tab title specified
 fi
 
 if (( gnomeTerminal )); then
-  script="$terminalApp $CMD_NEWTAB_1 $CMD_SWITCH_TO $CMD_TITLE -- $SHELL -c '$CMD_CUSTOM $CMD_KEEP_TAB_OPEN'"
-  echo $script
+  script="$terminalApp $CMD_NEWTAB_1 $CMD_SWITCH_TO $CMD_SET_PROFILE $CMD_TITLE -- $SHELL -c '$CMD_CUSTOM $CMD_KEEP_TAB_OPEN'"
 else
 
 # Now, synthesize the entire AppleScript
