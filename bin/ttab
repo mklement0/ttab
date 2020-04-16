@@ -174,13 +174,13 @@ if (( iTerm )); then
   #       so we need to distinguish versions below.
   #       $iTermOld reflects a pre-v3 version.
   [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0
-else
-  if [ -n "$COLORTERM" ]; then
+elif [[ $gnomeTerminal == 1 || -n $GNOME_TERMINAL_SCREEN ]]; then
     terminalApp='gnome-terminal'
     gnomeTerminal=1
-  else # Terminal.app
+elif [[ $(uname) == 'Darwin' ]]; then
     terminalApp='Terminal' # will be used with `activate application`
-  fi
+else
+    die "The calling program is not a supported terminal application. You must run from a supported terminal or use the -a option to target one." >&2
 fi
 
 # To be safe, clear any pre-existing variables with names matching those we'll be using below.
