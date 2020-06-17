@@ -80,10 +80,11 @@ ttab 'git branch; git status'
 ttab -d ~/Library/Application\ Support ls -1 
 
 # Open a new tab with title 'How Green Was My Valley' and settings 'Grass'.
+# See the note re use of -t in iTerm2 below.
 ttab -t 'How Green Was My Valley' -s Grass
 
 # Open a new tab and execute the specified script before showing the prompt.
-ttab /path/to/someScript 
+ttab /path/to/someScript
 
 # Open a new tab, execute the specified script, and exit.
 ttab exec /path/to/someScript
@@ -123,6 +124,11 @@ Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
 
 Standard options: --help, --man, --version, --home
 ```
+
+Note to **iTerm2 users**: The `-t` option for specifying a title only works if
+the new tab's active profile is configured to show the session name in the
+title, which can be configured via the Preferences dialog as shown by
+@francis-lookback [here](https://github.com/mklement0/ttab/issues/23#issuecomment-645210109).
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'LICENSE.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
 
