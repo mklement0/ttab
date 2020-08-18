@@ -4,7 +4,8 @@
   "private": false,
   "version": "0.6.1",
   "os": [
-    "darwin"
+    "darwin",
+    "linux"
   ],
   "preferGlobal": true,
   "bin": {
@@ -30,7 +31,9 @@
     "cli",
     "tabs",
     "windows",
-    "automate"
+    "automate",
+    "ubuntu",
+    "gnome-terminal"
   ],
   "man": "./man/ttab.1",
   "directories": {
