@@ -5,7 +5,7 @@
 # !! running further test scripts to abort.
 [[ $TERM_PROGRAM == 'Apple_Terminal' ]] || { echo "PLEASE RUN THESE TESTS FROM Terminal.app ONLY." >&2; exit 2; }
 
-cat <<EOF >&2
+cat <<'EOF' >&2
 ====
 NOTE: The test scripts will perform GUI scripting. 
 EXPECT SIMULATED USER ACTIVITY - such as creating new tabs and windows - 

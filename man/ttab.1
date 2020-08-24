@@ -1,44 +1,53 @@
-.TH "TTAB" "1" "November 2017" "v0.6.1" ""
+.TH "TTAB" "1" "August 2020" "v0.7.0" ""
 .SH "NAME"
-\fBttab\fR \- open a new Terminal\.app / iTerm\.app tab or window
+\fBttab\fR \- open a new terminal tab or window
 .SH SYNOPSIS
 .P
-Opens a new terminal tab or window in OS X's Terminal application or iTerm2\.
+Opens a new terminal tab or window, on macOS in either Terminal\.app or
+.br
+iTerm2\.app; on Linux in Gnome Terminal, if available\.
 .P
 .RS 2
 .nf
 ttab [\-w] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
 
-\-w                  open new tab in new terminal window
-\-s <settings>       assign a settings set (profile)
-\-t <title>          specify title for new tab
-\-q                  clear the new tab's screen
-\-g                  create tab in background (don't activate Terminal/iTerm)
-\-G                  create tab in background and don't activate new tab
-\-d <dir>            specify working directory; \-d '' disables inheriting
-                    the current dir\.
-\-a Terminal|iTerm2  open tab or window in Terminal\.app / iTerm2  
-<cmd> \.\.\.           command to execute in the new tab
-"<cmd> \.\.\.; \.\.\."    multi\-command command line (passed as single operand)
+\-w                  Open new tab in new terminal window\.
+\-s <settings>       Assign a settings set (profile)\.
+\-t <title>          Specify title for new tab\.
+\-q                  Clear the new tab's screen\.
+\-g                  Terminal/iTerm only: create in background (don't
+                    activate application)\.
+\-G                  Terminal/iTerm: don't activate new tab and create in
+                    background\.
+                    gnome\-terminal: don't activate new tab, except with \-w\.
+\-d <dir>            Specify working directory; \-d '' disables inheriting
+                    the current dir\. in Terminal/iTerm\.
+\-a Terminal | iTerm Open the new tab in the given terminal app on macOS\.
+<cmd> \.\.\.           Command to execute in the new tab\.
+"<cmd> \.\.\.; \.\.\."    Multi\-command command line (passed as single operand)\.
 .fi
 .RE
 .P
 Standard options: \fB\-\-help\fP, \fB\-\-man\fP, \fB\-\-version\fP, \fB\-\-home\fP
 .SH DESCRIPTION
 .P
-\fBttab\fP opens a new Terminal or iTerm2 tab with a variety of options,
+\fBttab\fP opens a new terminal tab with a variety of options,
 .br
 including executing a command in the new tab, assigning a title and working
 .br
 directory, and opening the tab in a new window\.
 .P
-Note: iTerm2 support is experimental in that it is currently not covered by
+Supports Terminal\.app and iTerm2\.app on macOS, and \- with limitations \-
 .br
-the automated tests run before every release\.
+gnome\-terminal on Linux\.
 .P
-IMPORTANT: \fBTerminal/iTerm2 must be allowed assistive access\fR in order
+Note: iTerm2 and gnome\-terminal support is currently not covered by the
 .br
-for this  utility to work, which requires one\-time authorization with
+automated tests run before every release\.
+.P
+IMPORTANT: On macOS, \fBTerminal/iTerm2 must be allowed assistive access\fR in
+.br
+order for this  utility to work, which requires one\-time authorization with
 .br
 administrative privileges\. If you get error messages instead of being prompted,
 .br
@@ -46,9 +55,11 @@ authorize the application via
 .br
 System Preferences > Security & Privacy > Privacy > Accessibility\.
 .P
-The new tab will run a login shell (i\.e\., load the user's shell profile)
+The new tab or window inherits the calling shell's working directory by default\.
 .br
-and by default inherit the working directory from the parent shell\.
+On macOS, the new tab or window runs a login shell (i\.e\., loads the user's
+.br
+shell profile) and inherits the calling shell's working directory\.
 .P
 When specifying a command to execute in the new tab, quoted parameters are
 .br
@@ -62,7 +73,7 @@ terminates\. If the tab's settings are configured to close tabs on termination
 .br
 of the shell, the tab will close automatically\.
 .P
-To specify \fImultiple\fR commands, pass them as a \fIsingle, quoted  string\fR\|\.
+To specify \fImultiple\fR commands, pass them as a single command\-line string\.
 .br
 Use \fBexit\fP as the last command to automatically close the tab when the
 .br
@@ -71,6 +82,37 @@ command terminates, assuming the tab's settings are configured to close the
 tab on termination of the shell\.
 .br
 Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
+.P
+IMPORTANT: Specifying a command to execute in the new tab has limitations:  
+.RS 0
+.IP \(bu 2
+Specifying a startup command is only supported for POSIX\-compatible shells,
+.br
+because "" is used for behind\-the\-scenes escaping, and the presence of the
+.br
+\fBeval\fP / \fBexec\fP builtins is assumed on macOS / Linux\.
+.br
+Notably, this precludes passing commands to PowerShell\.
+.IP \(bu 2
+With gnome\-terminal (Linux), $SHELL, the user's default shell is invariably
+.br
+used to execute the command and to run in the new tab, even if the target
+.br
+profile (settings) is configured to run a different shell\.
+.br
+Also, a workaround is employed to keep the tab open: because the $SHELL must
+.br
+be invoked with \-c in order to process the command, it exits on completion,
+.br
+so \fBexec $SHELL\fP is  executed afterwards to keep the tab open (unless you
+.br
+pass a single \fBexec\fP command or multi\-command string that ends with \fBexit\fP);
+.br
+this second $SHELL instance cannot guarantee that the original's shell
+.br
+environment is fully preserved\.
+
+.RE
 .SH OPTIONS
 .RS 0
 .IP \(bu 2
@@ -88,30 +130,30 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .br
  o Terminal: settings sets are defined in Preferences > Profiles;
 .br
- name matching is case\-\fIin\fRsensitive, and specifying nonexistent settings
+ name matching is case\-\fIin\fIsensitive, and specifying nonexistent settings
 .br
  causes an error\.
+.br
  o iTerm2: profiles are defined in Preferences > Profiles; name matching
 .br
- is case\-\fIsensitive\fR, and specifying a nonexistent profile causes an error\.
+ is case\-\fRsensitive\fR, and specifying a nonexistent profile causes an error\.
+ o gnome\-terminal: profiles are defined in Edit > Preferences; name matching
+.br
+ is case\-\fIsensitive\fR, and specifying a nonexistent profile falls back to
+.br
+ to the default profile\.
 .IP \(bu 2
 \fB\-t <title>\fP
 .br
- specifies a custom title to assign to the new tab; otherwise, if a
-.br
- command is specified, its first token will become the new tab's title\.
-.br
- CAVEAT: As of iTerm2 v3\.0\.9, choosing a title that exactly matches the
-.br
- settings name specified with \fB\-s\fP causes the title to be ignored\.
+ specifies a custom title to assign to the new tab\.    
 .IP \(bu 2
 \fB\-d <dir>\fP
 .br
  explicitly specifies a working directory for the new tab; by default, the
 .br
- invoking shell's working directory is inherited (even if \fB\-w\fP is also
+ invoking shell's working directory is inherited; in Terminal/iTerm, you
 .br
- specified) \- use \fB\-d ''\fP to disable\.
+ can use \fB\-d ''\fP to disable this inheriting\.
 .IP \(bu 2
 \fB\-q\fP
 .br
@@ -125,6 +167,8 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .IP \(bu 2
 \fB\-g\fP
 .br
+ Terminal/iTerm2 only:
+.br
  (back\fIg\fRround) causes Terminal/iTerm2 not to activate, if it isn't the
 .br
  frontmost application); within the application, however, the new tab will
@@ -135,13 +179,19 @@ Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .IP \(bu 2
 \fB\-G\fP
 .br
- causes Terminal/iTerm2 not to activate \fIand\fR the active element within
+ Terminal/iTerm2:
+   causes Terminal/iTerm2 not to activate \fIand\fR the active element within
 .br
- the application not to change; i\.e\., the active window and tab stay the
+   the application not to change; i\.e\., the active window and tab stay the
 .br
- same\. If Terminal/iTerm2 happens to be frontmost, the new tab will
+   same\. If Terminal/iTerm2 happens to be frontmost, the new tab will
 .br
- effectively open in the background\.
+   effectively open in the background\.
+ gnome\-terminal:
+.br
+   causes the new tab not to activate except if it is created in a
+.br
+   new window (\-w)\.
 
 .RE
 .P
@@ -152,15 +202,17 @@ NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal/iTe
 .IP \(bu 2
 \fB\-a Terminal\fP or \fB\-a iTerm2\fP
 .br
-  explicitly specifies the terminal application to use; by default, the
+  explicitly specifies which terminal application to use on macOS;
 .br
-  terminal application from which this utility is run is implied, if
+  by default, the terminal application from which this utility is run is
 .br
-  supported, with Terminal used as the fallback\.
+  implied, if supported, with Terminal / gnome\-terminal used as the default
 .br
-  This options is useful for calling this utility from non\-terminal
+  on  macOS / Linux\.
 .br
-  applications such as Alfred (https://www\.alfredapp\.com/)\.
+  This option is useful for calling this utility from non\-terminal
+.br
+  applications such as Alfred (https://www\.alfredapp\.com/) on macOS\.
 
 .RE
 .SH STANDARD OPTIONS

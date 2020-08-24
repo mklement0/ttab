@@ -2,7 +2,7 @@
   "name": "ttab",
   "description": "OSX CLI for opening a new terminal tab/window, optionally with a command to execute and/or display settings",
   "private": false,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "os": [
     "darwin",
     "linux"
@@ -49,12 +49,14 @@
     }
   },
   "devDependencies": {
-    "doctoc": "^0.13.0",
+    "doctoc": "^1.4.0",
     "json": "^9.0.3",
-    "marked-man": "^0.1.5",
-    "replace": "^0.3.0",
+    "marked": "^0.7.0",
+    "marked-man": "^0.7.0",
+    "replace": "^1.2.0",
     "semver": "^4.2.0",
-    "tap": "^0.6.0",
+    "tap": "^14.10.8",
     "urchin": "^0.0.5"
-  }
+  },
+  "dependencies": {}
 }

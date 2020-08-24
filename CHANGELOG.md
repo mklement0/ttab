@@ -4,6 +4,9 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.7.0](https://github.com/mklement0/ttab/compare/v0.6.1...v0.7.0)** (2020-08-24):
+  * [enhancement] Thanks to @ksvirsky, `ttab` is now also available on Linux, assuming `gnome-terminal` is available.
+
 * **[v0.6.1](https://github.com/mklement0/ttab/compare/v0.6.0...v0.6.1)** (2017-11-08):
   * [fix] macOS 10.13 (High Sierra compatibility), which makes `-G` work again.
   * [installation] Homebrew formula added (added post-release, on 2019-12-22).

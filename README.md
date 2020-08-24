@@ -5,9 +5,9 @@
 
 **Contents**
 
-- [ttab &mdash; open a new Terminal.app / iTerm2.app tab or window](#ttab-&mdash-open-a-new-terminalapp--iterm2app-tab-or-window)
+- [ttab &mdash; programmatically open a new terminal tab or window](#ttab-mdash-programmatically-open-a-new-terminal-tab-or-window)
 - [Installation](#installation)
-  - [Installation via Homebrew](#installation-via-homebrew)
+  - [Installation via Homebrew (macOS only)](#installation-via-homebrew-macos-only)
   - [Installation from the npm registry](#installation-from-the-npm-registry)
   - [Manual installation](#manual-installation)
 - [Examples](#examples)
@@ -19,20 +19,22 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# ttab &mdash; open a new Terminal.app / iTerm2.app tab or window
+# ttab &mdash; programmatically open a new terminal tab or window
 
-A [macOS (OS X)](https://www.apple.com/osx/) CLI for programmatically opening a new terminal tab/window in the standard terminal application, `Terminal`, 
-or in popular alternative [`iTerm2`](http://www.iterm2.com/), optionally with a command to execute and/or a specific title and specific display settings.
+A CLI for programmatically opening a new terminal tab/window in one of the following terminal applications, optionally with a command to execute and/or a specific title and specific display settings (profile).  
 
-Note: `iTerm2` support is experimental in that it is currently not covered by the automated tests run before every release.
+* On **[macOS](https://www.apple.com/macos)**: either `Terminal` (the default terminal emulator) or popular alternative [`iTerm2`](http://www.iterm2.com/).
+* On **Linux**, [Gnome Terminal](https://help.gnome.org/users/gnome-terminal) (`gnome-terminal`), thanks to a contribution by [@ksvirsky](https://github.com/ksvirsky).
+
+Note: `iTerm2` and `gnome-terminal` support is currently not covered by the automated tests run before every release.
 
 # Installation
 
-**Important**: Irrespective of installation method, `Terminal` / `iTerm2` (`iTerm.app`) needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
+**Important**: On macOS, irrespective of installation method, `Terminal` / `iTerm2` (`iTerm.app`) needs to be granted _access for assistive devices_ in order for `ttab` to function properly, which is a _one-time operation that requires administrative privileges_.  
 If you're not prompted on first run and get an error message instead, go to `System Preferences > Security & Privacy`, tab `Privacy`, select `Accessibility`, unlock, and make sure `Terminal.app` / `iTerm.app` is in the list on the right and has a checkmark.  
 For more information, see [Apple's support article on the subject](https://support.apple.com/en-us/HT202802).
 
-## Installation via Homebrew
+## Installation via Homebrew (macOS only)
 
 With [Homebrew](https://brew.sh/) installed, run the following:
 
@@ -42,15 +44,18 @@ brew install https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb
 
 <sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula.</sup>
 
+Note: The Homebrew version may lag behind the npm registry version if later versions relate
+solely to the Linux-only Gnome Terminal functionality.
+
 ## Installation from the npm registry
 
-With [Node.js](http://nodejs.org/) or [io.js](https://iojs.org/) installed, install from the [npm registry](https://www.npmjs.com/package/ttab):
+With [Node.js](http://nodejs.org/) installed, install from the [npm registry](https://www.npmjs.com/package/ttab):
 
     [sudo] npm install ttab -g
 
 **Note**:
 
-* Whether you need `sudo` depends on how you installed Node.js / io.js and whether you've [changed permissions later](https://docs.npmjs.com/getting-started/fixing-npm-permissions); if you get an `EACCES` error, try again with `sudo`.
+* Whether you need `sudo` depends on how you installed Node.js and whether you've [changed permissions later](https://docs.npmjs.com/getting-started/fixing-npm-permissions); if you get an `EACCES` error, try again with `sudo`.
 * The `-g` ensures [_global_ installation](https://docs.npmjs.com/getting-started/installing-npm-packages-globally) and is needed to put `ttab` in your system's `$PATH`.
 
 ## Manual installation
@@ -66,7 +71,7 @@ With [Node.js](http://nodejs.org/) or [io.js](https://iojs.org/) installed, inst
 ttab
 
 # Open a new tab in a new terminal window.
-ttab -w 
+ttab -w
 
 # Open a new tab and execute the specified command before showing the prompt.
 ttab ls -l "$HOME/Library/Application Support"
@@ -106,21 +111,25 @@ Find concise usage information below; for complete documentation, read the [manu
 $ ttab --help
 
 
-Opens a new terminal tab or window in OS X's Terminal application or iTerm2.
+Opens a new terminal tab or window, on macOS in either Terminal.app or  
+iTerm2.app; on Linux in Gnome Terminal, if available.
 
     ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
-    -w                  open new tab in new terminal window
-    -s <settings>       assign a settings set (profile)
-    -t <title>          specify title for new tab
-    -q                  clear the new tab's screen
-    -g                  create tab in background (don't activate Terminal/iTerm)
-    -G                  create tab in background and don't activate new tab
-    -d <dir>            specify working directory; -d '' disables inheriting
-                        the current dir.
-    -a Terminal|iTerm2  open tab or window in Terminal.app / iTerm2  
-    <cmd> ...           command to execute in the new tab
-    "<cmd> ...; ..."    multi-command command line (passed as single operand)
+    -w                  Open new tab in new terminal window.
+    -s <settings>       Assign a settings set (profile).
+    -t <title>          Specify title for new tab.
+    -q                  Clear the new tab's screen.
+    -g                  Terminal/iTerm only: create in background (don't
+                        activate application).
+    -G                  Terminal/iTerm: don't activate new tab and create in
+                        background.
+                        gnome-terminal: don't activate new tab, except with -w.
+    -d <dir>            Specify working directory; -d '' disables inheriting
+                        the current dir. in Terminal/iTerm.
+    -a Terminal | iTerm Open the new tab in the given terminal app on macOS.
+    <cmd> ...           Command to execute in the new tab.
+    "<cmd> ...; ..."    Multi-command command line (passed as single operand).
 
 Standard options: --help, --man, --version, --home
 ```
@@ -134,7 +143,7 @@ title, which can be configured via the Preferences dialog as shown by
 
 # License
 
-Copyright (c) 2015-2019 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
+Copyright (c) 2015-2020 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
 
 ## Acknowledgements
 
@@ -146,12 +155,13 @@ This project gratefully depends on the following open-source components, accordi
 
 ## npm dependencies
 
-* [doctoc (D)](https://github.com/thlorenz/doctoc)
+* [doctoc (D)](https://github.com/thlorenz/doctoc#readme)
 * [json (D)](https://github.com/trentm/json#readme)
+* [marked (D)](https://marked.js.org)
 * [marked-man (D)](https://github.com/kapouer/marked-man#readme)
-* [replace (D)](https://github.com/harthur/replace)
+* [replace (D)](https://github.com/ALMaclaine/replace#readme)
 * [semver (D)](https://github.com/npm/node-semver#readme)
-* [tap (D)](https://github.com/isaacs/node-tap)
+* [tap (D)](http://www.node-tap.org/)
 * [urchin (D)](https://github.com/tlevine/urchin)
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'CHANGELOG.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
@@ -161,6 +171,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.7.0](https://github.com/mklement0/ttab/compare/v0.6.1...v0.7.0)** (2020-08-24):
+  * [enhancement] Thanks to @ksvirsky, `ttab` is now also available on Linux, assuming `gnome-terminal` is available.
 
 * **[v0.6.1](https://github.com/mklement0/ttab/compare/v0.6.0...v0.6.1)** (2017-11-08):
   * [fix] macOS 10.13 (High Sierra compatibility), which makes `-G` work again.
