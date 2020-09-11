@@ -24,11 +24,8 @@ Specific startup command problems:
 
 * gnome-terminal (Linux):
 
-  * If you want to specify a startup command and PowerShell is not the user's default shell, you must call the PowerShell CLI explicitly, given that `ttab` passes the startup command to `$SHELL -c`, irrespective of what the targeted profile may specify
-as the shell to run.
-
-  * Therefore, use `[exec] pwsh -noexit -c ...` explicitly; `exec` will only work if `$SHELL` is a POSIX-compatible shell.
-    Omit the `-noexit` for a run-and-exit command.
+  * The `\`-escaping of spaces and POSIX shell metacharacters performed by `ttab` makes even explicit calls to the PowerShell CLI (e.g., `ttab --print-script exec pwsh -noexit -c 'get-date; ls'`).
+  * Short of using `pwsh -EncodedCommand <base64-encoded-command>`, which is obviously impractical, there is **currently no workaround**.
 
 * Terminal / iTerm (macOS):
 
@@ -39,4 +36,4 @@ as the shell to run.
   Executable calls with individual arguments that _require quoting_ (e.g., `ttab Get-ChildItem '/Library/Application Support'`) break due to the `\`-escaping.
   The challenge is that we have no (easy) way to know what shell the target profile (settings) is configured to use.
 
-  * Short of using`pwsh -EncodedCommand <base64-encoded-command>`, which is obviously impracticel, there is **currently no workaround**.
+  * Short of using `pwsh -EncodedCommand <base64-encoded-command>`, which is obviously impractical, there is **currently no workaround**.
