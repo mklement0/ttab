@@ -39,7 +39,10 @@ For more information, see [Apple's support article on the subject](https://suppo
 With [Homebrew](https://brew.sh/) installed, run the following:
 
 ```sh
-brew install https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb
+brew update &&
+curl https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb --output ttab.rb && 
+brew install -s ttab.rb && 
+rm ttab.rb
 ```
 
 <sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula.</sup>
