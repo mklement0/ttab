@@ -45,7 +45,7 @@ brew install -s ttab.rb &&
 rm ttab.rb
 ```
 
-<sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula.</sup>
+<sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula, and to [@leemm](https://github.com/leemm) for updating the instructions after Homebrew stopped supporting installing directly from an online `.rb` file.</sup>
 
 Note: The Homebrew version may lag behind the npm registry version if later versions relate
 solely to the Linux-only Gnome Terminal functionality.
