@@ -21,10 +21,11 @@
 
 # ttab &mdash; programmatically open a new terminal tab or window
 
-A CLI for programmatically opening a new terminal tab/window in one of the following terminal applications, optionally with a command to execute and/or a specific title and specific display settings (profile).  
+A CLI for Unix-like platforms that programmatically opening a new terminal tab/window in one of the following terminal applications, optionally with a command to execute and/or a specific title and specific display settings (profile).  
 
 * On **[macOS](https://www.apple.com/macos)**: either `Terminal` (the default terminal emulator) or popular alternative [`iTerm2`](http://www.iterm2.com/).
 * On **Linux**, [Gnome Terminal](https://help.gnome.org/users/gnome-terminal) (`gnome-terminal`), thanks to a contribution by [@ksvirsky](https://github.com/ksvirsky).
+* Note: `ttab` does _not_ support **Windows**; consider using the [Windows Terminal](https://github.com/microsoft/terminal/blob/main/README.md)-based [`wttab`](https://github.com/lalilaloe/wttab) utility there.
 
 Note: `iTerm2` and `gnome-terminal` support is currently not covered by the automated tests run before every release.
 
