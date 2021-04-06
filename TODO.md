@@ -2,6 +2,8 @@
 
 URL and sha256 hash must be updated for every release.
 
+Manual instructions for now.
+
 Presumably this means that we must make *2* commits:
 
 * Commit the tagged release in order to make GitHub generate the *.tar.gz package.
@@ -9,16 +11,18 @@ Presumably this means that we must make *2* commits:
 * Wait until that has happened and create the hash.
 
 ```powershell
-$ver='0.6.1'; curl -Lo /tmp/ttab.tar.gz  https://github.com/mklement0/ttab/archive/v$ver.tar.gz && shasum -a 256 /tmp/ttab.tar.gz && rm /tmp/ttab.tar.gz
+$ver='0.7.1'; curl -Lo /tmp/ttab.tar.gz  https://github.com/mklement0/ttab/archive/v$ver.tar.gz && shasum -a 256 /tmp/ttab.tar.gz && rm /tmp/ttab.tar.gz
 ```
+
+* Update the `*.rb` file in terms of both the URL and the hash.
 
 * Test the formula locally.
 
 ```powershell
-brew install -s ./ttab.rb
+$env:HOMEBREW_NO_AUTO_UPDATE=1; brew install --formula ./ttab.rb
 ```
 
-* Update the `*.rb` file in terms of both the URL and the hash, and commit it.
+* Commit and push.
 
 
 # Consider supporting PowerShell
