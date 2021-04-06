@@ -40,16 +40,17 @@ For more information, see [Apple's support article on the subject](https://suppo
 With [Homebrew](https://brew.sh/) installed, run the following:
 
 ```sh
-brew update &&
-curl https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb --output ttab.rb && 
-brew install -s ttab.rb && 
+curl -LO https://raw.githubusercontent.com/mklement0/ttab/master/ttab.rb && 
+HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula ttab.rb && 
 rm ttab.rb
 ```
 
 <sup>Tip of the hat to [@dsingingwolfboy](https://github.com/singingwolfboy) for inspiring me to add this installation method and providing the original formula, and to [@leemm](https://github.com/leemm) for updating the instructions after Homebrew stopped supporting installing directly from an online `.rb` file.</sup>
 
-Note: The Homebrew version may lag behind the npm registry version if later versions relate
-solely to the Linux-only Gnome Terminal functionality.
+Note:
+
+* The Homebrew version may lag behind the npm registry version if later versions relate solely to the Linux-only Gnome Terminal functionality. 
+* To remove `ttab` later, run `brew rm ttab`.
 
 ## Installation from the npm registry
 

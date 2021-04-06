@@ -2,19 +2,28 @@
 
 URL and sha256 hash must be updated for every release.
 
-?? Presumably this means that we must make *2* commits:
+Presumably this means that we must make *2* commits:
 
-* Commit the tagged release - *without* the `*.rb` file first - in order to make GitHub generate the *.tar.gz package.
+* Commit the tagged release in order to make GitHub generate the *.tar.gz package.
 
-* Wait until that has happened, download the package, and determine its sha256 hash.
+* Wait until that has happened and create the hash.
+
+```powershell
+$ver='0.6.1'; curl -Lo /tmp/ttab.tar.gz  https://github.com/mklement0/ttab/archive/v$ver.tar.gz && shasum -a 256 /tmp/ttab.tar.gz && rm /tmp/ttab.tar.gz
+```
 
 * Test the formula locally.
 
-* Update the `*.rb` file and commit it.
+```powershell
+brew install -s ./ttab.rb
+```
+
+* Update the `*.rb` file in terms of both the URL and the hash, and commit it.
+
 
 # Consider supporting PowerShell
 
-Note: The problems relate to specying a startup command for the new tab:
+Note: The problems relate to specifying a startup command for the new tab:
 
 * On macOS, even if no user-specified startup command is given, an automatically constructed one is used for technical reasons, namely to ensure preserving the caller's working directory.
 
@@ -34,6 +43,6 @@ Specific startup command problems:
 
   * CONCEPTUAL PROBLEM: Passing a single argument that isn't an executable (alone), which includes argument-less PowerShell cmdlet calls, is currently pasted and submitted via AppleScript as an `eval` call with a POSIX-shell-metacharacters-escaped-with-`\` string, neither of which PowerShell understands.
   Executable calls with individual arguments that _require quoting_ (e.g., `ttab Get-ChildItem '/Library/Application Support'`) break due to the `\`-escaping.
-  The challenge is that we have no (easy) way to know what shell the target profile (settings) is configured to use.
+  The challenge is that we have no (easy) way of knowing what shell the target profile (settings) is configured to use.
 
   * Short of using `pwsh -EncodedCommand <base64-encoded-command>`, which is obviously impractical, there is **currently no workaround**.

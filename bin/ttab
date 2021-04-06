@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.7.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.7.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -56,8 +56,11 @@ printUsage() {
 }
 
 # Indicate by exit code whether the OS version is 10.13 (High Sierra) or above.
-isHighSierraOrAbove() {  # High Sierra == macOS 10.13
-  (( $(sw_vers -productVersion | awk -F. '{ print $2 }') >= 13 ))
+isHighSierraOrAbove() {
+  local -i major minor
+  read major minor <<<$(sw_vers -productVersion | awk -F. '{ print $1; print $2 }')
+  # High Sierra == macOS 10.13; Big Sur is 11.x
+  (( (major == 10 &&  minor >= 13) || major >= 11 ))
 }
 
 # --- End: STANDARD HELPER FUNCTIONS
