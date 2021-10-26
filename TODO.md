@@ -2,25 +2,30 @@
 
 URL and sha256 hash must be updated for every release.
 
-Manual instructions for now.
+**Manual instructions** for now:
 
-Presumably this means that we must make *2* commits:
+* Commit the tagged release in order to make GitHub generate the new version's *.tar.gz package.
 
-* Commit the tagged release in order to make GitHub generate the *.tar.gz package.
+* Update the `*.rb` file in terms of initially _just_ the URL; e.g., for `0.7.2`:
+  * `url "https://github.com/mklement0/ttab/archive/v0.7.2.tar.gz"`
 
-* Wait until that has happened and create the hash.
+* Use the formula *locally*, which predictably _fails_ due to the outdated hash, but the error message will report the _new_ hash:
 
-```powershell
-$ver='0.7.1'; curl -Lo /tmp/ttab.tar.gz  https://github.com/mklement0/ttab/archive/v$ver.tar.gz && shasum -a 256 /tmp/ttab.tar.gz && rm /tmp/ttab.tar.gz
+```bash
+HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula ./ttab.rb
 ```
 
-* Update the `*.rb` file in terms of both the URL and the hash.
-
-* Test the formula locally.
+OR
 
 ```powershell
 $env:HOMEBREW_NO_AUTO_UPDATE=1; brew install --formula ./ttab.rb
 ```
+
+* Copy the new hash from the error message and update the `*.rb` file again, with the new hash.
+
+* Run the formual *locally* again, as above, which should now succeed.
+
+  * Verify that `rreadlink "$(which ttab)"` shows that `/usr/local/bin/ttab` links to the correct version.
 
 * Commit and push.
 
