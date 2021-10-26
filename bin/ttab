@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.7.1' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.7.2' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -130,9 +130,11 @@ while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* 
       targetTermSpecified=1
       ;;
     g)
+      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G."; fi
       inBackground=1
       ;;
     G)
+      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G."; fi
       inBackground=2
       ;;
     q)
@@ -325,12 +327,27 @@ fi
   #     invocation from helper apps such as Alfred where the terminal may be
   #     created implicitly and not gain focus by default.
   # !! On 10.10+, activate is no longer *synchronous*, so we must wait until Terminal is truly activated (frontmost)
-CMD_ACTIVATE='if not frontmost then
+  # !! iTerm has a setting that hides the application from the dock and from being switched to with ⌘-tab
+  # !! (Appearance > General > Exclude from Dock and ⌘-Tab Application Switcher). When active, AppleScript can no longer
+  # !! detect when iTerm is frontmost, which prevents:
+  # !!  * synchronously waiting for iTerm to become active
+  # !!  * the -g / -G options from working (they rely on saving the currently frontmost application, and if it is iTerm, that won't work)
+  # !! Thus, we simply forgo synchronous activation in this case, and disallow use of the -g / -G options.
+canDetectActivation=1
+if (( iTerm )); then
+  if [[ '1' == $(defaults read com.googlecode.iterm2 HideFromDockAndAppSwitcher 2>/dev/null) ]]; then canDetectActivation=0; fi
+  if (( ! canDetectActivation && inBackground )); then
+    die "While iTerm's 'Exclude from Dock and ⌘-Tab Application Switcher' feature is turned on, the options -g and -G are unsupported."
+  fi
+fi
+CMD_ACTIVATE="if not frontmost then
   activate
-  repeat until frontmost
+  if $canDetectActivation = 1 then
+    repeat until frontmost
       delay 0.1
-  end repeat
-end if'
+    end repeat
+  end if
+end if"
 
   # Terminal/iTerm only:
   # For use with -g and -G: commands for saving and restoring the previous application

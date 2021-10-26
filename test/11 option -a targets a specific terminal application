@@ -4,9 +4,26 @@ ttabBin="../bin/ttab"
 
 [[ -d /Applications/iTerm.app ]] || { echo "WARNING: Cannot test option -a, because iTerm2 appears not to be installed." >&2; exit 0; }
 
-activeTerminal() {
+activateTerminal() {
   osascript -e 'tell application "Terminal.app" to activate'
 }
+
+activeiTermSync() {
+  osascript -e'
+    tell application "iTerm" 
+      activate
+      repeat until frontmost
+        delay 0.1
+      end repeat
+    end tell
+  '
+}
+
+# Make sure that iTerm is launched and activated, so that if we can get a reliable
+# current window count below.
+# If iTerm isn't running and is launched asynchronously, on demand, it initially
+# reports 0 windows, before it automatically opens its default window.
+activeiTermSync 
 
 numWinsBefore=$(osascript -e 'tell application "iTerm.app" to count windows')
 
@@ -20,6 +37,6 @@ numWinsAfter=$(osascript -e 'tell application "iTerm.app" to count windows')
 osascript -e 'tell application "iTerm.app" to close front window'
 
 # ... and reativate Terminal.app.
-activeTerminal
+activateTerminal
 
 exit 0

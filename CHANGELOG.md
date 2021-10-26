@@ -4,6 +4,9 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.7.2](https://github.com/mklement0/ttab/compare/v0.7.1...v0.7.2)** (2021-10-26):
+  * [fix] for #39; `ttab` now works correctly when iTerm's "Exclude from Dock and ⌘-Tab Application Switcher" preference is enabled, albeit without support for `-g` and `-G`, for technical reasons.
+
 * **[v0.7.1](https://github.com/mklement0/ttab/compare/v0.7.0...v0.7.1)** (2021-04-06):
   * [fix] Fix for #13: `-g` and `-G` now work in macOS Big Sur too.
 

@@ -5,6 +5,7 @@
 # !! running further test scripts to abort.
 [[ $TERM_PROGRAM == 'Apple_Terminal' ]] || { echo "PLEASE RUN THESE TESTS FROM Terminal.app ONLY. Press ^C TO abort now." >&2; read; exit 2; }
 [[ $SHELL =~ bash ]] || { echo "PLEASE MAKE SURE THAT BASH IS THE DEFAULT USER SHELL AND THAT iTerm2 USES IT TO CREATE TABS. Press ^C TO abort now." >&2; read; exit 2; }
+[[ '1' != $(defaults read com.googlecode.iterm2 HideFromDockAndAppSwitcher 2>/dev/null) ]] || { echo "PLEASE TURN OFF iTerm's 'Exclude from Dock and ⌘-Tab Application Switcher' FEATURE BEFOR RUNNING THE TESTS. Press ^C TO abort now." >&2; read; exit 2; }
 
 cat <<'EOF' >&2
 ====
@@ -13,7 +14,8 @@ EXPECT SIMULATED USER ACTIVITY - such as creating new tabs and windows -
 and therefore lots of FLASHING - throughout running the whole suite of tests.
 
 INDIVIDUAL TESTS MAY FAIL *INTERMITTENTLY*.
-When in doubt, run failing tests INDIVIDUALLY to see if they succeed.
+When in doubt, run failing tests INDIVIDUALLY to see if they succeed:
+CD TO THE ./test SUBDIR and RUN THEM FROM THERE.
 
 !! Due to using a *.scpt file (utils.scpt) - which we need in order to be able
 !! to use `load script` - and the *.scpt file having been compiled on 
