@@ -522,15 +522,17 @@ if (( gnomeTerminal )); then
   # !! a command with -c *and staying open* (not exiting) afterwards, the best we can do is to append `; exec $SHELL` to the -c
   # !! call, which is only an *approximation* of staying in the same shell, however.
   if [[ -n $CMD_CUSTOM ]]; then
-    CMD_OPT_CUSTOM="-- $SHELL -c $CMD_CUSTOM"
     if [[ (${#shellCmdTokens[@]} -gt 1 && ${shellCmdTokens[0]} == 'exec') || (${#shellCmdTokens[@]} -eq 1 && ${shellCmdTokens[0]} =~ ('&&'|'||'|';')\ *exit\ *\;?\ *$) ]]; then
       # !! If the command starts with `exec` or ends in `exit`, we infer that the intent
       # !! is NOT to keep the tab open; since $SHELL -c automatically exits by default, there's nothing to do.
-      :
+      CMD_OPT_CUSTOM="-- $SHELL -c $CMD_CUSTOM"
     else
       # !! Artifically keep the tab open by re-executing $SHELL in interactive mode.
       # !! The shell environment of the original shell cannot be fully preserved that way.
-      CMD_OPT_CUSTOM+="\;\ exec\ $SHELL"
+      # !! Note the use of `trap` with signals EXIT (normal exit) and INT (Ctrl-C) to ensure
+      # !! that the new interactive shell is also launched when the original shell is terminated with Ctrl-C.
+      # !! Verified to work in dash, bash, ksh, and zsh (in bash, EXIT alone would cover Ctrl-C, but not in zsh, for instance).
+      CMD_OPT_CUSTOM="-- $SHELL -c trap\ \'exec\ $SHELL\'\ INT\ EXIT\;\ $CMD_CUSTOM"
     fi
   fi
 
