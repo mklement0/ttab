@@ -4,6 +4,9 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.7.3](https://github.com/mklement0/ttab/compare/v0.7.2...v0.7.3)** (2022-08-11):
+  * [fix] for #43; the way that keeping the shell alive is emulated in Gnome Terminal now also works when the startup command is aborted with Ctrl-C.
+
 * **[v0.7.2](https://github.com/mklement0/ttab/compare/v0.7.1...v0.7.2)** (2021-10-26):
   * [fix] for #39; `ttab` now works correctly when iTerm's "Exclude from Dock and ⌘-Tab Application Switcher" preference is enabled, albeit without support for `-g` and `-G`, for technical reasons.
 

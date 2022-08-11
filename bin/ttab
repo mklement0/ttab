@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.7.2' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.7.3' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 

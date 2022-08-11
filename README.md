@@ -160,14 +160,14 @@ This project gratefully depends on the following open-source components, accordi
 
 ## npm dependencies
 
-* [doctoc (D)](https://github.com/thlorenz/doctoc#readme)
-* [json (D)](https://github.com/trentm/json#readme)
+* [doctoc (D)]()
+* [json (D)]()
 * [marked (D)](https://marked.js.org)
-* [marked-man (D)](https://github.com/kapouer/marked-man#readme)
-* [replace (D)](https://github.com/ALMaclaine/replace#readme)
-* [semver (D)](https://github.com/npm/node-semver#readme)
+* [marked-man (D)]()
+* [replace (D)]()
+* [semver (D)]()
 * [tap (D)](http://www.node-tap.org/)
-* [urchin (D)](https://github.com/tlevine/urchin)
+* [urchin (D)]()
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'CHANGELOG.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
 
@@ -176,6 +176,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.7.3](https://github.com/mklement0/ttab/compare/v0.7.2...v0.7.3)** (2022-08-11):
+  * [fix] for #43; the way that keeping the shell alive is emulated in Gnome Terminal now also works when the startup command is aborted with Ctrl-C.
 
 * **[v0.7.2](https://github.com/mklement0/ttab/compare/v0.7.1...v0.7.2)** (2021-10-26):
   * [fix] for #39; `ttab` now works correctly when iTerm's "Exclude from Dock and ⌘-Tab Application Switcher" preference is enabled, albeit without support for `-g` and `-G`, for technical reasons.
