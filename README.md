@@ -82,7 +82,7 @@ ttab -w
 ttab ls -l "$HOME/Library/Application Support"
 
 # Open a new tab and execute the specified command *after a delay* of 0.8 secs,
-# to  accommodate shells with lengthy initialization-file processing.
+# to accommodate shells with lengthy initialization-file processing.
 # Note: You may preset the delay via environment variable TTAB_CMD_DELAY
 ttab -l 0.8 ls -1
 

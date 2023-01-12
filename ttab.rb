@@ -5,8 +5,8 @@
 class Ttab < Formula
   desc "CLI for opening tabs/windows in Terminal, iTerm2, or Gnome Terminal"
   homepage "https://github.com/mklement0/ttab"
-  url "https://github.com/mklement0/ttab/archive/v0.7.3.tar.gz"
-  sha256 "12871b3e7d6ce33d3a66ca57f41dbcb782746b5e59fca3e6b1eac084cf3f9337"
+  url "https://github.com/mklement0/ttab/archive/v0.8.0.tar.gz"
+  sha256 "ce609d3db37f8d2a62f5e854a8b57c272ba3d180f05a2463c564b3a72fc00222"
 
   def install
     bin.install "bin/ttab"
