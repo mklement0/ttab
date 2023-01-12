@@ -1,4 +1,4 @@
-.TH "TTAB" "1" "August 2022" "v0.7.3" ""
+.TH "TTAB" "1" "January 2023" "v0.8.0" ""
 .SH "NAME"
 \fBttab\fR \- open a new terminal tab or window
 .SH SYNOPSIS
@@ -22,6 +22,8 @@ ttab [\-w] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\
                     gnome\-terminal: don't activate new tab, except with \-w\.
 \-d <dir>            Specify working directory; \-d '' disables inheriting
                     the current dir\. in Terminal/iTerm\.
+\-l <secs>           Terminal/iTerm only: delay startup command submission;
+                    may be preset via env\. var\. TTAB_CMD_DELAY
 \-a Terminal | iTerm Open the new tab in the given terminal app on macOS\.
 <cmd> \.\.\.           Command to execute in the new tab\.
 "<cmd> \.\.\.; \.\.\."    Multi\-command command line (passed as single operand)\.
@@ -195,10 +197,31 @@ environment is fully preserved\.
 
 .RE
 .P
-NOTE: With \fB\-g\fP or \fB\-G\fP specified, for technical reasons, Terminal/iTerm2 /
+NOTE: Terminal/iTerm2: With \fB\-g\fP or \fB\-G\fP, the new tab will still activate
 .br
-      the new tab will still activate \fIbriefly, temporarily\fR in most scenarios\.
+      \fIbriefly, temporarily\fR, for technical reasons\. The temporary activation
+.br
+      lasts as least as long as the effective \-l value (command\-submission
+.br
+      delay)\.
 .RS 0
+.IP \(bu 2
+\fB\-l <secs>\fP
+.br
+  Terminal/iTerm2 only:
+.br
+  delays submitting a startup command by the specified number
+.br
+  of seconds (fractions supported); useful for shells with initialization
+.br
+  files that take a long time to process\. 
+  Note that setting a working dir\. with \-d alone requires a startup command,
+.br
+  and that in iTerm2 setting a working dir\. is always required\.
+.br
+  The default is 0\.1 secs; you can preset a different value via
+.br
+  environment variable TTAB_CMD_DELAY\. Note the impact on \-g / \-G\.
 .IP \(bu 2
 \fB\-a Terminal\fP or \fB\-a iTerm2\fP
 .br

@@ -81,6 +81,11 @@ ttab -w
 # Open a new tab and execute the specified command before showing the prompt.
 ttab ls -l "$HOME/Library/Application Support"
 
+# Open a new tab and execute the specified command *after a delay* of 0.8 secs,
+# to  accommodate shells with lengthy initialization-file processing.
+# Note: You may preset the delay via environment variable TTAB_CMD_DELAY
+ttab -l 0.8 ls -1
+
 # Open a new tab and execute *multiple* commands in it - note how the entire
 # command line is specified as *single, quoted string*.
 ttab 'git branch; git status'
@@ -132,6 +137,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         gnome-terminal: don't activate new tab, except with -w.
     -d <dir>            Specify working directory; -d '' disables inheriting
                         the current dir. in Terminal/iTerm.
+    -l <secs>           Terminal/iTerm only: delay startup command submission;
+                        may be preset via env. var. TTAB_CMD_DELAY
     -a Terminal | iTerm Open the new tab in the given terminal app on macOS.
     <cmd> ...           Command to execute in the new tab.
     "<cmd> ...; ..."    Multi-command command line (passed as single operand).
@@ -148,7 +155,7 @@ title, which can be configured via the Preferences dialog as shown by
 
 # License
 
-Copyright (c) 2015-2021 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
+Copyright (c) 2015-2023 Michael Klement <mklement0@gmail.com> (http://same2u.net), released under the [MIT license](https://spdx.org/licenses/MIT#licenseText).
 
 ## Acknowledgements
 
@@ -160,14 +167,14 @@ This project gratefully depends on the following open-source components, accordi
 
 ## npm dependencies
 
-* [doctoc (D)](https://github.com/thlorenz/doctoc)
-* [json (D)](https://github.com/trentm/json)
+* [doctoc (D)]()
+* [json (D)]()
 * [marked (D)](https://marked.js.org)
-* [marked-man (D)](https://github.com/kapouer/marked-man)
-* [replace (D)](https://github.com/ALMaclaine/replace)
-* [semver (D)](https://github.com/npm/node-semver)
+* [marked-man (D)]()
+* [replace (D)]()
+* [semver (D)]()
 * [tap (D)](http://www.node-tap.org/)
-* [urchin (D)](https://git.sdf.org/tlevine/urchin#user-content-install)
+* [urchin (D)]()
 
 <!-- DO NOT EDIT THE NEXT CHAPTER and RETAIN THIS COMMENT: The next chapter is updated by `make update-readme/release` with the contents of 'CHANGELOG.md'. ALSO, LEAVE AT LEAST 1 BLANK LINE AFTER THIS COMMENT. -->
 
@@ -176,6 +183,9 @@ This project gratefully depends on the following open-source components, accordi
 Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
+
+* **[v0.8.0](https://github.com/mklement0/ttab/compare/v0.7.3...v0.8.0)** (2023-01-12):
+  * [enhancement] New `-l` option / env. var. `TTAB_CMD_DELAY` allows specifying a delay before submitting a startup command to a new tab, to accommodate shells whose initialization-file processing takes a while (iTerminal / iTerm2 only).
 
 * **[v0.7.3](https://github.com/mklement0/ttab/compare/v0.7.2...v0.7.3)** (2022-08-11):
   * [fix] for #43; the way that keeping the shell alive is emulated in Gnome Terminal now also works when the startup command is aborted with Ctrl-C.

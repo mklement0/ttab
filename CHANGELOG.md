@@ -4,6 +4,9 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.8.0](https://github.com/mklement0/ttab/compare/v0.7.3...v0.8.0)** (2023-01-12):
+  * [enhancement] New `-l` option / env. var. `TTAB_CMD_DELAY` allows specifying a delay before submitting a startup command to a new tab, to accommodate shells whose initialization-file processing takes a while (iTerminal / iTerm2 only).
+
 * **[v0.7.3](https://github.com/mklement0/ttab/compare/v0.7.2...v0.7.3)** (2022-08-11):
   * [fix] for #43; the way that keeping the shell alive is emulated in Gnome Terminal now also works when the startup command is aborted with Ctrl-C.
 

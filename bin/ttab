@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME=${BASH_SOURCE##*/}
-kTHIS_VERSION='v0.7.3' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.8.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -107,7 +107,8 @@ targetTermSpecified=0
 inNewWin=0
 cls=0
 terminalApp=''
-while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
+delayCmdSubmissionBy='' && kRE_FRACTIONAL_SECONDS='^[0-9]+(\.[0-9]+)?$' && kDEFAULT_CMD_DELAY='0.1'
+while getopts ':wgGqs:t:d:a:l:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
   [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
   [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
   case "$opt" in
@@ -140,12 +141,25 @@ while getopts ':wgGqs:t:d:a:' opt; do  # $opt will receive the option *letters* 
     q)
       cls=1
       ;;
+    l)  # "l" as in de*l*ay or *lag* - not great, but better than -y (and -d is already taken)
+      delayCmdSubmissionBy=$OPTARG
+      [[ $delayCmdSubmissionBy =~ $kRE_FRACTIONAL_SECONDS ]] || dieSyntax "-l argument must be 0 or a positive number in (optionally fractional) seconds."
+      ;;
     *) # An unrecognized switch.
       dieSyntax "DESIGN ERROR: unanticipated option: $opt"
       ;;
   esac
 done
 shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
+
+# Allow presetting the -l option via an environment variable.
+if [[ -z $delayCmdSubmissionBy ]]; then
+  delayCmdSubmissionBy="$TTAB_CMD_DELAY"
+  [[ -z $delayCmdSubmissionBy || $delayCmdSubmissionBy =~ $kRE_FRACTIONAL_SECONDS ]] || { delayCmdSubmissionBy=''; echo "WARNING: Ignoring -l preset via env. var. TTAB_CMD_DELAY, because its value isn't a positive number of (optionally fractional) seconds." >&2; }
+  # If not set by env. var., use the default delay.
+  # We use a 
+  [[ -z $delayCmdSubmissionBy ]] && delayCmdSubmissionBy="$kDEFAULT_CMD_DELAY"
+fi
 
 # All remaining arguments, if any, make up the command to execute in the new tab/window.
 
@@ -524,7 +538,7 @@ if (( gnomeTerminal )); then
   if [[ -n $CMD_CUSTOM ]]; then
     if [[ (${#shellCmdTokens[@]} -gt 1 && ${shellCmdTokens[0]} == 'exec') || (${#shellCmdTokens[@]} -eq 1 && ${shellCmdTokens[0]} =~ ('&&'|'||'|';')\ *exit\ *\;?\ *$) ]]; then
       # !! If the command starts with `exec` or ends in `exit`, we infer that the intent
-      # !! is NOT to keep the tab open; since $SHELL -c automatically exits by default, there's nothing to do.
+      # !! is NOT to keep the tab open; since $SHELL -c automatically exits by default, there's nothing else to do.
       CMD_OPT_CUSTOM="-- $SHELL -c $CMD_CUSTOM"
     else
       # !! Artifically keep the tab open by re-executing $SHELL in interactive mode.
@@ -538,7 +552,12 @@ if (( gnomeTerminal )); then
 
   script="$terminalApp $CMD_NEWTAB_1 $CMD_OPT_ACTIVATE $CMD_OPT_CWD $CMD_OPT_PROFILE $CMD_TITLE $CMD_OPT_CUSTOM"
 
-else
+else # Terminal/iTerm2
+
+  # Insert a delay before submitting a custom command and/or directory-changing command via AppleScript
+  # Note: Fortunately, AppleScript's `delay` command supports *fractional* seconds.
+  CMD_DELAY=
+  [[ -n $CMD_CUSTOM && -n $delayCmdSubmissionBy ]] && CMD_DELAY="delay $delayCmdSubmissionBy"
 
   # Now, synthesize the entire AppleScript
   # !! At least on 10.10, the commands to save the active application and to reactivate it later must be OUTSIDE of the tell application "Terminal" block to work.
@@ -550,6 +569,7 @@ else
     $CMD_NEWTAB_1
     $CMD_NEWTAB_2
     $CMD_TITLE
+    $CMD_DELAY
     $CMD_CUSTOM
     $CMD_REACTIVATE_PREV_TAB
   end tell
@@ -635,6 +655,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         gnome-terminal: don't activate new tab, except with -w.
     -d <dir>            Specify working directory; -d '' disables inheriting
                         the current dir. in Terminal/iTerm.
+    -l <secs>           Terminal/iTerm only: delay startup command submission;
+                        may be preset via env. var. TTAB_CMD_DELAY
     -a Terminal | iTerm Open the new tab in the given terminal app on macOS.
     <cmd> ...           Command to execute in the new tab.
     "<cmd> ...; ..."    Multi-command command line (passed as single operand).
@@ -742,8 +764,20 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
       causes the new tab not to activate except if it is created in a  
       new window (-w).
 
-NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /  
-      the new tab will still activate *briefly, temporarily* in most scenarios.
+NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate   
+      *briefly, temporarily*, for technical reasons. The temporary activation  
+      lasts as least as long as the effective -l value (command-submission   
+      delay).
+
+* `-l <secs>`  
+    Terminal/iTerm2 only:  
+    delays submitting a startup command by the specified number  
+    of seconds (fractions supported); useful for shells with initialization  
+    files that take a long time to process. 
+    Note that setting a working dir. with -d alone requires a startup command,  
+    and that in iTerm2 setting a working dir. is always required.  
+    The default is 0.1 secs; you can preset a different value via  
+    environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
 * `-a Terminal` or `-a iTerm2`  
     explicitly specifies which terminal application to use on macOS;  

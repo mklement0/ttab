@@ -20,6 +20,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         gnome-terminal: don't activate new tab, except with -w.
     -d <dir>            Specify working directory; -d '' disables inheriting
                         the current dir. in Terminal/iTerm.
+    -l <secs>           Terminal/iTerm only: delay startup command submission;
+                        may be preset via env. var. TTAB_CMD_DELAY
     -a Terminal | iTerm Open the new tab in the given terminal app on macOS.
     <cmd> ...           Command to execute in the new tab.
     "<cmd> ...; ..."    Multi-command command line (passed as single operand).
@@ -127,8 +129,20 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
       causes the new tab not to activate except if it is created in a  
       new window (-w).
 
-NOTE: With `-g` or `-G` specified, for technical reasons, Terminal/iTerm2 /  
-      the new tab will still activate *briefly, temporarily* in most scenarios.
+NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate   
+      *briefly, temporarily*, for technical reasons. The temporary activation  
+      lasts as least as long as the effective -l value (command-submission   
+      delay).
+
+* `-l <secs>`  
+    Terminal/iTerm2 only:  
+    delays submitting a startup command by the specified number  
+    of seconds (fractions supported); useful for shells with initialization  
+    files that take a long time to process. 
+    Note that setting a working dir. with -d alone requires a startup command,  
+    and that in iTerm2 setting a working dir. is always required.  
+    The default is 0.1 secs; you can preset a different value via  
+    environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
 * `-a Terminal` or `-a iTerm2`  
     explicitly specifies which terminal application to use on macOS;  
