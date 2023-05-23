@@ -47,6 +47,7 @@ brew install mklement0/ttab/ttab
 Note:
 
 * The Homebrew version may lag behind the npm registry version if later versions relate solely to the Linux-only Gnome Terminal functionality. 
+* To upgrade `ttab` to the latest version, run `brew upgrade ttab`.
 * To remove `ttab` later, run `brew rm ttab`.
 
 ## Installation from the npm registry
