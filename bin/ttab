@@ -568,9 +568,14 @@ else # Terminal/iTerm2
     $CMD_SAVE_ACTIVE_TAB
     $CMD_NEWTAB_1
     $CMD_NEWTAB_2
-    $CMD_TITLE
     $CMD_DELAY
     $CMD_CUSTOM
+    $CMD_DELAY
+    $CMD_DELAY
+    $CMD_DELAY
+    $CMD_DELAY
+    $CMD_DELAY
+    $CMD_TITLE
     $CMD_REACTIVATE_PREV_TAB
   end tell
   $CMD_REACTIVATE_PREV_APP
