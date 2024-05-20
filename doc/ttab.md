@@ -4,12 +4,21 @@
 
 ## SYNOPSIS
 
-Opens a new terminal tab or window, on macOS in either Terminal.app or  
+Opens a new terminal tab or window, on macOS in either Terminal.app or
 iTerm2.app; on Linux in Gnome Terminal, if available.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
+    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
+    -c                  Do not open any new window or tab, run in the current tab of the
+                        current window.
+    -v                  Open new split tab vertically in the current window.
+    -h                  Open new split tab horizontally in the current window.
+    -i                  Do not try to `cd` to the target directory for testing its
+                        existence.
+                        This could fail if the script is running from an un-priviliged
+                        session (e.g. Apple Schortcuts), whilst the final attempt,
+                        done by the targeted terminal app, could work perfectly.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
@@ -30,148 +39,166 @@ Standard options: `--help`, `--man`, `--version`, `--home`
 
 ## DESCRIPTION
 
-`ttab` opens a new terminal tab with a variety of options,  
-including executing a command in the new tab, assigning a title and working  
+`ttab` opens a new terminal tab with a variety of options,
+including executing a command in the new tab, assigning a title and working
 directory, and opening the tab in a new window.
 
-Supports Terminal.app and iTerm2.app on macOS, and - with limitations -  
+Supports Terminal.app and iTerm2.app on macOS, and - with limitations -
 gnome-terminal on Linux.
 
-Note: iTerm2 and gnome-terminal support is currently not covered by the  
+Note: iTerm2 and gnome-terminal support is currently not covered by the
 automated tests run before every release.
 
-IMPORTANT: On macOS, **Terminal/iTerm2 must be allowed assistive access** in  
-order for this  utility to work, which requires one-time authorization with  
-administrative privileges. If you get error messages instead of being prompted,  
-authorize the application via  
+IMPORTANT: On macOS, **Terminal/iTerm2 must be allowed assistive access** in
+order for this  utility to work, which requires one-time authorization with
+administrative privileges. If you get error messages instead of being prompted,
+authorize the application via
 System Preferences > Security & Privacy > Privacy > Accessibility.
 
-The new tab or window inherits the calling shell's working directory by default.  
-On macOS, the new tab or window runs a login shell (i.e., loads the user's  
+The new tab or window inherits the calling shell's working directory by default.
+On macOS, the new tab or window runs a login shell (i.e., loads the user's
 shell profile) and inherits the calling shell's working directory.
 
-When specifying a command to execute in the new tab, quoted parameters are  
-handled properly and there's no need to quote the command as a whole,  
-provided it is a *single* command.  
-Prefix such a single command with `exec` to exit the shell after the command  
-terminates. If the tab's settings are configured to close tabs on termination  
+When specifying a command to execute in the new tab, quoted parameters are
+handled properly and there's no need to quote the command as a whole,
+provided it is a *single* command.
+Prefix such a single command with `exec` to exit the shell after the command
+terminates. If the tab's settings are configured to close tabs on termination
 of the shell, the tab will close automatically.
 
-To specify *multiple* commands, pass them as a single command-line string.  
-Use `exit` as the last command to automatically close the tab when the  
-command terminates, assuming the tab's settings are configured to close the  
-tab on termination of the shell.  
+To specify *multiple* commands, pass them as a single command-line string.
+Use `exit` as the last command to automatically close the tab when the
+command terminates, assuming the tab's settings are configured to close the
+tab on termination of the shell.
 Precede `exit` with `read -rsn 1` to wait for a keystroke first.
 
-IMPORTANT: Specifying a command to execute in the new tab has limitations:  
+IMPORTANT: Specifying a command to execute in the new tab has limitations:
 
-* Specifying a startup command is only supported for POSIX-compatible shells,  
-  because "\" is used for behind-the-scenes escaping, and the presence of the  
-  `eval` / `exec` builtins is assumed on macOS / Linux.  
+* Specifying a startup command is only supported for POSIX-compatible shells,
+  because "\" is used for behind-the-scenes escaping, and the presence of the
+  `eval` / `exec` builtins is assumed on macOS / Linux.
   Notably, this precludes passing commands to PowerShell.
 
-* With gnome-terminal (Linux), $SHELL, the user's default shell is invariably  
-  used to execute the command and to run in the new tab, even if the target  
-  profile (settings) is configured to run a different shell.  
-  Also, a workaround is employed to keep the tab open: because the $SHELL must  
-  be invoked with -c in order to process the command, it exits on completion,  
-  so `exec $SHELL` is  executed afterwards to keep the tab open (unless you  
-  pass a single `exec` command or multi-command string that ends with `exit`);  
-  this second $SHELL instance cannot guarantee that the original's shell  
+* With gnome-terminal (Linux), $SHELL, the user's default shell is invariably
+  used to execute the command and to run in the new tab, even if the target
+  profile (settings) is configured to run a different shell.
+  Also, a workaround is employed to keep the tab open: because the $SHELL must
+  be invoked with -c in order to process the command, it exits on completion,
+  so `exec $SHELL` is  executed afterwards to keep the tab open (unless you
+  pass a single `exec` command or multi-command string that ends with `exit`);
+  this second $SHELL instance cannot guarantee that the original's shell
   environment is fully preserved.
 
 ## OPTIONS
 
- * `-w`  
-    creates the new tab in a new window rather than in the front  
+* `-w`
+    creates the new tab in a new window rather than in the front
     window.
 
- * `-s <settings>`  
-    specifies the settings set (profile) to apply to the new tab, determining  
-    the appearance and behavior of the new tab.  
-    o Terminal: settings sets are defined in Preferences > Profiles;  
-    name matching is case-*in*sensitive, and specifying nonexistent settings  
-    causes an error.  
-    o iTerm2: profiles are defined in Preferences > Profiles; name matching  
+* `-c`
+    does not create any new window or tab, and uses the current tab in the front window.
+
+* `-h`
+    creates the new tab split horizontally from the current one in the front window.
+
+* `-v`
+    creates the new tab split vertically from the current one in the front window.
+
+NOTE: The `-h` and `-v` are only available in the new iTerm.
+      These options suppress the effect of the `-g` or `-G` option.
+
+* `-i`
+    prevent the scrip to `cd` into the target directory for testing its existence.
+    This could fail if the script is running from an un-priviliged session
+    (e.g. Apple Schortcuts), whilst the final attempt, done by the targeted terminal app,
+    could work perfectly.
+
+* `-s <settings>`
+    specifies the settings set (profile) to apply to the new tab, determining
+    the appearance and behavior of the new tab.
+    o Terminal: settings sets are defined in Preferences > Profiles;
+    name matching is case-*in*sensitive, and specifying nonexistent settings
+    causes an error.
+    o iTerm2: profiles are defined in Preferences > Profiles; name matching
     is case-*sensitive*, and specifying a nonexistent profile causes an error.
-    o gnome-terminal: profiles are defined in Edit > Preferences; name matching    
-    is case-*sensitive*, and specifying a nonexistent profile falls back to  
+    o gnome-terminal: profiles are defined in Edit > Preferences; name matching
+    is case-*sensitive*, and specifying a nonexistent profile falls back to
     to the default profile.
 
- * `-t <title>`   
-    specifies a custom title to assign to the new tab.    
+* `-t <title>`
+   specifies a custom title to assign to the new tab.
 
- * `-d <dir>`  
-    explicitly specifies a working directory for the new tab; by default, the  
-    invoking shell's working directory is inherited; in Terminal/iTerm, you  
+* `-d <dir>`
+    explicitly specifies a working directory for the new tab; by default, the
+    invoking shell's working directory is inherited; in Terminal/iTerm, you
     can use `-d ''` to disable this inheriting.
 
- * `-q`  
-    (*q*uiet) issues a `clear` command after opening the new tab.  
-    Note that output will temporarily be visible while the tab is being opened;  
-    also, clearing is not performed if any command passed reports an overall  
+* `-q`
+    (*q*uiet) issues a `clear` command after opening the new tab.
+    Note that output will temporarily be visible while the tab is being opened;
+    also, clearing is not performed if any command passed reports an overall
     nonzero exit code, so as to allow failures to be examined.
 
- * `-g`  
-    Terminal/iTerm2 only:  
-    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the  
-    frontmost application); within the application, however, the new tab will  
-    become the active tab; useful in scripts that launch other applications and  
+* `-g`
+    Terminal/iTerm2 only:
+    (back*g*round) causes Terminal/iTerm2 not to activate, if it isn't the
+    frontmost application); within the application, however, the new tab will
+    become the active tab; useful in scripts that launch other applications and
     don't want Terminal/iTerm2 to steal focus later.
 
- * `-G`  
+* `-G`
     Terminal/iTerm2:
-      causes Terminal/iTerm2 not to activate *and* the active element within  
-      the application not to change; i.e., the active window and tab stay the  
-      same. If Terminal/iTerm2 happens to be frontmost, the new tab will  
+      causes Terminal/iTerm2 not to activate *and* the active element within
+      the application not to change; i.e., the active window and tab stay the
+      same. If Terminal/iTerm2 happens to be frontmost, the new tab will
       effectively open in the background.
-    gnome-terminal:  
-      causes the new tab not to activate except if it is created in a  
+    gnome-terminal:
+      causes the new tab not to activate except if it is created in a
       new window (-w).
 
-NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate   
-      *briefly, temporarily*, for technical reasons. The temporary activation  
-      lasts as least as long as the effective -l value (command-submission   
+NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
+      *briefly, temporarily*, for technical reasons. The temporary activation
+      lasts as least as long as the effective -l value (command-submission
       delay).
 
-* `-l <secs>`  
-    Terminal/iTerm2 only:  
-    delays submitting a startup command by the specified number  
-    of seconds (fractions supported); useful for shells with initialization  
-    files that take a long time to process. 
-    Note that setting a working dir. with -d alone requires a startup command,  
-    and that in iTerm2 setting a working dir. is always required.  
-    The default is 0.1 secs; you can preset a different value via  
+* `-l <secs>`
+    Terminal/iTerm2 only:
+    delays submitting a startup command by the specified number
+    of seconds (fractions supported); useful for shells with initialization
+    files that take a long time to process.
+    Note that setting a working dir. with -d alone requires a startup command,
+    and that in iTerm2 setting a working dir. is always required.
+    The default is 0.1 secs; you can preset a different value via
     environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
-* `-a Terminal` or `-a iTerm2`  
-    explicitly specifies which terminal application to use on macOS;  
-    by default, the terminal application from which this utility is run is  
-    implied, if supported, with Terminal / gnome-terminal used as the default  
-    on  macOS / Linux.  
-    This option is useful for calling this utility from non-terminal  
-    applications such as Alfred (https://www.alfredapp.com/) on macOS.
+* `-a Terminal` or `-a iTerm2`
+    explicitly specifies which terminal application to use on macOS;
+    by default, the terminal application from which this utility is run is
+    implied, if supported, with Terminal / gnome-terminal used as the default
+    on  macOS / Linux.
+    This option is useful for calling this utility from non-terminal
+    applications such as Alfred (<https://www.alfredapp.com/>) on macOS.
 
 ## STANDARD OPTIONS
 
 All standard options provide information only.
 
- * `-h, --help`  
+* `--help`
     Prints the contents of the synopsis chapter to stdout for quick reference.
 
- * `--man`  
-    Displays this manual page, which is a helpful alternative to using `man`, 
+* `--man`
+    Displays this manual page, which is a helpful alternative to using `man`,
     if the manual page isn't installed.
 
- * `--version`  
+* `--version`
     Prints version information.
-    
- * `--home`  
+
+* `--home`
     Opens this utility's home page in the system's default web browser.
 
 ## LICENSE
 
-For license information and more, visit this utility's home page by running  
+For license information and more, visit this utility's home page by running
 `ttab --home`.
 
 ## EXAMPLES
@@ -182,20 +209,30 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
+    # Execute the command in the current tab of the current terminal window:
+    ttab -c 'ls "$HOME/Library/Application Support"
+
+    # Open new horizontal split tab in the current terminal window:
+    ttab -h
+
+    # Open new vertical split tab in the current terminal window, changing the path to the
+    # given path, but without checking the presence of the target directory:
+    ttab -v -i -d "$HOME/Library/Application Support"
+
     # Open new tab with title 'Green' using settings (profile) 'Grass':
-    ttab -t Green -s Grass  
+    ttab -t Green -s Grass
 
     # Open new tab and execute a command in it:
     ttab ls -l "$HOME/Library/Application Support"
 
     # Open new tab with specified working dir. and execute a command in it:
     ttab -d "$HOME/Library/Application Support" ls -l
-    
+
     # Execute a command and exit.
     # If configured via the default profile, also close the tab.
     ttab exec /path/to/someprogram arg1 arg2
-    
-    # Pass a multi-command string as a single, quoted string, wait for a  
+
+    # Pass a multi-command string as a single, quoted string, wait for a
     # keystroke, then exit.
     ttab 'ls "$HOME/Library/Application Support";
                                 echo Press any key to exit; read -rsn 1; exit'
