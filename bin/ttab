@@ -228,7 +228,17 @@ while :; do
     terminalApp='gnome-terminal' # binary file name
   else # The calling program is not a known terminal.
     # Determine a platform-appropriate default.
-    (( isMacOS )) && Terminal=1 || gnomeTerminal=1
+    if (( isMacOS )); then
+      # Give a chance to detect the presence of iTerm2, if cannot be find fallback to Terminal.app as the default
+      if [[ $(mdfind "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'" 2>/dev/null) != "" ]]; then
+        iTerm=1
+        terminalApp='iTerm'
+      else
+        Terminal=1
+      fi
+    else
+      gnomeTerminal=1
+    fi
     continue
   fi
   break
