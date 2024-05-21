@@ -210,7 +210,7 @@ For license information and more, visit this utility's home page by running
     ttab -w
 
     # Execute the command in the current tab of the current terminal window:
-    ttab -c 'ls "$HOME/Library/Application Support"
+    ttab -c 'ls "$HOME/Library/Application Support"'
 
     # Open new horizontal split tab in the current terminal window:
     ttab -h
