@@ -76,6 +76,16 @@ ttab
 # Open a new tab in a new terminal window.
 ttab -w
 
+# Execute the command in the current tab of the current terminal window:
+ttab -c 'ls "$HOME/Library/Application Support"'
+
+# Open new horizontal split tab in the current terminal window:
+ttab -h
+
+# Open new vertical split tab in the current terminal window, changing the path to the
+# given path, but without checking the presence of the target directory:
+ttab -v -i -d "$HOME/Library/Application Support"
+
 # Open a new tab and execute the specified command before showing the prompt.
 ttab ls -l "$HOME/Library/Application Support"
 
@@ -122,10 +132,19 @@ $ ttab --help
 Opens a new terminal tab or window, on macOS in either Terminal.app or
 iTerm2.app; on Linux in Gnome Terminal, if available.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
+    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
     -s <settings>       Assign a settings set (profile).
+    -c                  Do not open any new window or tab, run in the current tab of the
+                        current window.
+    -v                  Open new split tab vertically in the current window.
+    -h                  Open new split tab horizontally in the current window.
+    -i                  Do not try to `cd` to the target directory for testing its
+                        existence.
+                        This could fail if the script is running from an un-priviliged
+                        session (e.g. Apple Schortcuts), whilst the final attempt,
+                        done by the targeted terminal app, could work perfectly.
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
     -g                  Terminal/iTerm only: create in background (don't
