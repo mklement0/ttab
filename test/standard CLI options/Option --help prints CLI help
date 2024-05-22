@@ -13,6 +13,4 @@ PATH=${PWD%%/test*}/bin:$PATH
 # and causes this test to fail.
 # See https://github.com/tlevine/urchin.
 
-ttab -h | fgrep -qw 'ttab' || exit
-
 ttab --help | fgrep -qw 'ttab' || exit

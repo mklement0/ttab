@@ -4,6 +4,12 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
 
 <!-- NOTE: An entry template for a new version is automatically added each time `make version` is called. Fill in changes afterwards. -->
 
+* **[v0.9.0](https://github.com/mklement0/ttab/compare/v0.8.0...v0.9.0)** (2024-05-22):
+  * [enhancement] Thanks to [@HofiOne](https://github.com/HofiOne), `ttab` now supports new macOS-focused options, `-h`, `-v`, `-c`, and `-i`, 
+    which notably includes support for splitting the current tab horizontally (`-h`) or vertically (`-v`) in iTerm2.
+  * [fix] Attempts to use options that are not supported in the target terminal now consistently result in errors.
+  * [breaking change] Since `-h` now requests horizontal splitting, it can no longer be used to invoke help; use `--help` instead.
+
 * **[v0.8.0](https://github.com/mklement0/ttab/compare/v0.7.3...v0.8.0)** (2023-01-12):
   * [enhancement] New `-l` option / env. var. `TTAB_CMD_DELAY` allows specifying a delay before submitting a startup command to a new tab, to accommodate shells whose initialization-file processing takes a while (iTerminal / iTerm2 only).
 
@@ -17,7 +23,7 @@ Versioning complies with [semantic versioning (semver)](http://semver.org/).
   * [fix] Fix for #13: `-g` and `-G` now work in macOS Big Sur too.
 
 * **[v0.7.0](https://github.com/mklement0/ttab/compare/v0.6.1...v0.7.0)** (2020-08-24):
-  * [enhancement] Thanks to @ksvirsky, `ttab` is now also available on Linux, assuming `gnome-terminal` is available.
+  * [enhancement] Thanks to [@ksvirsky](https://github.com/ksvirsky), `ttab` is now also available on Linux, assuming `gnome-terminal` is available.
 
 * **[v0.6.1](https://github.com/mklement0/ttab/compare/v0.6.0...v0.6.1)** (2017-11-08):
   * [fix] macOS 10.13 (High Sierra compatibility), which makes `-G` work again.

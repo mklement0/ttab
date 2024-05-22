@@ -2,7 +2,7 @@
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
 kTHIS_NAME='ttab' # ${BASH_SOURCE##*/} NOTE: Hardcoded as in some cases the detected name can be a UUID, or similar (e.g. invoking ttab from Apple Shortcuts)
-kTHIS_VERSION='v0.8.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
+kTHIS_VERSION='v0.9.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
 
@@ -152,11 +152,11 @@ while getopts ':wcvhgGqis:t:d:a:l:' opt; do  # $opt will receive the option *let
       targetTermSpecified=1
       ;;
     g)
-      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G."; fi
+      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G"; fi
       inBackground=1
       ;;
     G)
-      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G."; fi
+      if (( inBackground )); then dieSyntax "Please specify EITHER -g OR -G"; fi
       inBackground=2
       ;;
     q)
@@ -177,14 +177,14 @@ shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
 if [[ -z $dir && doNotTestDir -eq 1 ]]; then
   # Specifying -i without also specifying -d
-  dieSyntax "The '-i' option requires '-d', directory option as well."
+  dieSyntax "The -i option requires the -d option as well."
 elif (( inNewSplitTabV && inNewSplitTabH )); then
   # Fail, if both `-v` and `-h` provided
-  dieSyntax "Both '-v' and '-h' options are presented, please use only one of them."
+  dieSyntax "Please specify EITHER -v or -h."
 elif (( inNewSplitTabV || inNewSplitTabH )); then
   # Option -v and -h cannot be used, or meaningless to use with '-g', '-G', '-w' or '-c' now
   if (( inNewWin || inCurrent || inBackground )); then
-    dieSyntax "The '-v' and '-h' options are clashing, or meaningless if any of the '-g', '-G', '-w' or '-c' options are presented, please review your option selections."
+    dieSyntax "The -v and -h options are mutually exclusive with the following options: -g -G -w -c"
   fi
 fi
 
@@ -339,7 +339,7 @@ elif (( inNewSplitTabV || inNewSplitTabH )); then # Create the new split tab in 
     fi
     CMD_NEWTAB_2='select newSplit'
   else
-    die "Vertical or horizontal tab splitting is not a supported in '$terminalApp'"
+    dieSyntax "Vertical or horizontal tab splitting is not supported in $terminalApp."
   fi
 
 elif (( inCurrent == 0 )); then  # If should not use the actual, active tab, by default create a new tab in the CURRENT WINDOW (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
@@ -390,12 +390,12 @@ elif (( inCurrent == 0 )); then  # If should not use the actual, active tab, by 
 
   fi
 
-else # In current tab
+else # In current tab (-c)
 
   if (( Terminal )); then
     CMD_NEWTAB_1='set newTab to selected tab of front window'
-  elif (( gnomeTerminal && inCurrent ))
-    dieSyntax "Sorry, the '-c' option cannot be used with '$terminalApp' currently."
+  elif (( gnomeTerminal && inCurrent )); then
+    dieSyntax "The '-c' option is not supported in $terminalApp."
   fi
 
 fi
@@ -596,6 +596,8 @@ fi
 
 if (( gnomeTerminal )); then
 
+  (( inBackground == 1 )) && dieSyntax "The -g option is not supported in $terminalApp."
+
   # The new tab should become active, unless -G is specified.
   (( inBackground == 2 )) || CMD_OPT_ACTIVATE='--active'
 
@@ -714,12 +716,10 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
+    -v                  iTerm only: create a new vertical split
+    -h                  iTerm only: create a new horizontal split
     -c                  Terminal/iTerm only: do not open any new window or
                         tab, run in the current tab of the current window.
-    -v                  iTerm only: open new split tab vertically in the
-                        current window.
-    -h                  iTerm only: open new split tab horizontally in the
-                        current window.
     -i                  Suppress up-front verification of the existence of
                         the target directory specified via the -d option.
     -s <settings>       Assign a settings set (profile).
@@ -802,26 +802,23 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     Terminal/iTerm2 only:  
     does not create any new window or tab, and uses the current tab in the  
     front window.  
-    This migth be useful when tterm is called from an external tool, and  
-    the tool wants targeting the actual terminal directly (e.g. from a  
-    macOS service, or Shortcut).  
+    This is primarily useful when launching this utility from a macOS service  
+    or Shortcuts.app shortcut, for targeting the target terminal's current tab.  
 
  * `-h`  
     iTerm2 only:  
-    creates the new tab split horizontally from the current one in the front  
-    window.  
+    creates a new horizontal split in the current tab.  
 
  * `-v`  
     iTerm2 only:  
-    creates the new tab split vertically from the current one in the front  
-    window.  
+    creates a (new) vertical split in the current tab.  
 
  * `-i`  
     suppresses up-front verification of the existence of the target directory  
     specified via the -d option.  
     This is primarily useful on macOS if this utility is launched from a  
-    non-privileged session (e.g., Apple Shortcuts) that may not have access  
-    to the target directory, whereas the targeted terminal application does.  
+    non-privileged session (e.g., a Shortcuts.app shortcut) that may not have  
+    access to the target directory, whereas the targeted terminal may.  
 
  * `-s <settings>`  
     specifies the settings set (profile) to apply to the new tab, determining  
@@ -831,7 +828,7 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     causes an error.  
     o iTerm2: profiles are defined in Preferences > Profiles; name matching  
     is case-*sensitive*, and specifying a nonexistent profile causes an error.
-    o gnome-terminal: profiles are defined in Edit > Preferences; name matching    
+    o gnome-terminal: profiles are defined in Edit > Preferences; name matching  
     is case-*sensitive*, and specifying a nonexistent profile falls back to  
     to the default profile.
 
@@ -866,9 +863,9 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
       causes the new tab not to activate except if it is created in a  
       new window (-w).
 
-NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate   
+NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate  
       *briefly, temporarily*, for technical reasons. The temporary activation  
-      lasts as least as long as the effective -l value (command-submission   
+      lasts as least as long as the effective -l value (command-submission  
       delay).
 
 * `-l <secs>`  
@@ -876,8 +873,9 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
     delays submitting a startup command by the specified number  
     of seconds (fractions supported); useful for shells with initialization  
     files that take a long time to process. 
-    Note that setting a working dir. with -d alone requires a startup command,  
-    and that in iTerm2 setting a working dir, is always required.  
+    Note that setting a working dir. with -d alone entails execution of a  
+    startup command (`cd`), and that in iTerm2 such a startup command is run  
+    even by default, to ensure that the caller's working dir. is inherited.  
     The default is 0.1 secs; you can preset a different value via  
     environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
@@ -893,7 +891,7 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
 
 All standard options provide information only.
 
- * `-h, --help`  
+ * `--help`  
     Prints the contents of the synopsis chapter to stdout for quick reference.
 
  * `--man`  
