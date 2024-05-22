@@ -132,7 +132,7 @@ $ ttab --help
 Opens a new terminal tab or window, on macOS in either Terminal.app or
 iTerm2.app; on Linux in Gnome Terminal, if available.
 
-    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
+    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-n <name>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
     -s <settings>       Assign a settings set (profile).
@@ -146,6 +146,7 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         session (e.g. Apple Shortcuts), whilst the final attempt,
                         done by the targeted terminal app, could work perfectly.
     -t <title>          Specify title for new tab.
+    -n <name>           Specify a diplay name for this script.
     -q                  Clear the new tab's screen.
     -g                  Terminal/iTerm only: create in background (don't
                         activate application).

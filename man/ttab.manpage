@@ -9,7 +9,7 @@ iTerm2\.app; on Linux in Gnome Terminal, if available\.
 .P
 .RS 2
 .nf
-ttab [\-w|\-v|\-h|\-c] [\-i] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
+ttab [\-w|\-v|\-h|\-c] [\-i] [\-s <settings>] [\-t <title>] [\-n <name>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
 
 \-w                  Open new tab in new terminal window\.
 \-c                  Do not open any new window or tab, run in the current tab of the
@@ -20,6 +20,7 @@ ttab [\-w|\-v|\-h|\-c] [\-i] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d
                     existence\.
 \-s <settings>       Assign a settings set (profile)\.
 \-t <title>          Specify title for new tab\.
+\-n <name>           Specify a diplay name for this script\.
 \-q                  Clear the new tab's screen\.
 \-g                  Terminal/iTerm only: create in background (don't
                     activate application)\.
@@ -191,6 +192,10 @@ NOTE: The `\-h` and `\-v` are only available in the new iTerm.
 \fB\-t <title>\fP
 .br
  specifies a custom title to assign to the new tab\.
+.IP \(bu 2
+\fB\-n <name>\fP
+.br
+ specifies a custom display name for this script\.
 .IP \(bu 2
 \fB\-d <dir>\fP
 .br

@@ -7,7 +7,7 @@
 Opens a new terminal tab or window, on macOS in either Terminal.app or
 iTerm2.app; on Linux in Gnome Terminal, if available.
 
-    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
+    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-n <name>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
     -c                  Do not open any new window or tab, run in the current tab of the
@@ -21,6 +21,7 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         done by the targeted terminal app, could work perfectly.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
+    -n <name>           Specify a diplay name for this script.
     -q                  Clear the new tab's screen.
     -g                  Terminal/iTerm only: create in background (don't
                         activate application).
@@ -127,6 +128,11 @@ NOTE: The `-h` and `-v` are only available in the new iTerm.
 
 * `-t <title>`
    specifies a custom title to assign to the new tab.
+
+* `-n <name>`
+    specifies a custom display name for `ttab` as it cannot be determined
+    always correctly, or meaningfully set (e.g. when invoked from
+    Apple Shortcuts).
 
 * `-d <dir>`
     explicitly specifies a working directory for the new tab; by default, the
