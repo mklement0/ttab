@@ -62,7 +62,13 @@ Note:
 
 With [Node.js](http://nodejs.org/) installed, install from the [npm registry](https://www.npmjs.com/package/ttab):
 
-    [sudo] npm install ttab -g
+* Initial installation:
+
+      [sudo] npm install ttab -g
+
+* Later update:
+
+      [sudo] npm upgrade ttab -g
 
 **Note**:
 
