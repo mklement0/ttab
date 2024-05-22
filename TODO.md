@@ -7,7 +7,7 @@ URL and sha256 hash must be updated for every release.
 * Commit the tagged release in order to make GitHub generate the new version's *.tar.gz package.
 
 * Update the `*.rb` file in terms of initially _just_ the URL; e.g., for `0.7.2`:
-  * `url "https://github.com/mklement0/ttab/archive/v0.7.2.tar.gz"`
+  * `url "https://github.com/mklement0/ttab/archive/v0.9.0.tar.gz"`
 
 * Use the formula *locally*, which predictably _fails_ due to the outdated hash, but the error message will report the _new_ hash:
 
