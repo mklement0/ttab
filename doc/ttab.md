@@ -12,8 +12,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     -w                  Open new tab in new terminal window.
     -c                  Do not open any new window or tab, run in the current tab of the
                         current window.
-    -v                  Open new split tab vertically in the current window.
-    -h                  Open new split tab horizontally in the current window.
+    -v                  iTerm only: Open new split tab vertically in the current window.
+    -h                  iTerm only: Open new split tab horizontally in the current window.
     -i                  Do not try to `cd` to the target directory for testing its
                         existence.
                         This could fail if the script is running from an non-privileged
