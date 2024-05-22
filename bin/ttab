@@ -173,6 +173,19 @@ while getopts ':wcvhgGqis:t:d:a:l:' opt; do  # $opt will receive the option *let
 done
 shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
+# Some more options sanity check that cannot be done inplace, (e.g. their order is not guarantied)
+
+if (( inNewSplitTabV && inNewSplitTabH )); then
+  # Fail, if both `-v` and `-h` provided
+  dieSyntax "Both '-v' and '-h' options are presented, please use only one of them."
+elif (( inNewSplitTabV || inNewSplitTabH )); then
+  # Option -v and -h cannot be used, or meaningless to use with '-g', '-G', '-w' or '-c' now
+  if (( inNewWin || inCurrent || inBackground)); then
+    dieSyntax "The '-v' and '-h' options are clashing, or meaningless if any of the '-g', '-G', '-w' or '-c' options are presented, please review your option selections."
+  fi
+fi
+
+
 # Allow presetting the -l option via an environment variable.
 if [[ -z $delayCmdSubmissionBy ]]; then
   delayCmdSubmissionBy="$TTAB_CMD_DELAY"
