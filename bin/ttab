@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
-kTHIS_NAME=${BASH_SOURCE##*/}
+kTHIS_NAME='ttab' # ${BASH_SOURCE##*/} NOTE: Hardcoded as in some cases the detected name can be a UUID, or similar (e.g. invoking ttab from Apple Shortcuts)
 kTHIS_VERSION='v0.8.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
