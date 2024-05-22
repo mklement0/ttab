@@ -76,9 +76,6 @@ ttab
 # Open a new tab in a new terminal window.
 ttab -w
 
-# Execute the command in the current tab of the current terminal window:
-ttab -c 'ls "$HOME/Library/Application Support"'
-
 # Open new horizontal split tab in the current terminal window:
 ttab -h
 
@@ -117,6 +114,9 @@ ttab 'ls "$HOME/Library/Application Support"; echo Press a key to exit.; read -r
 
 # Open a new tab in iTerm2 (if installed).
 ttab -a iTerm2 echo 'Hi from iTerm2.'
+
+# Execute the command in the current tab of the current terminal window:
+ttab -c 'ls "$HOME/Library/Application Support"'
 ```
 
 # Usage
@@ -136,15 +136,14 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
 
     -w                  Open new tab in new terminal window.
     -s <settings>       Assign a settings set (profile).
-    -c                  Do not open any new window or tab, run in the current tab of the
+    -c                  Terminal/iTerm only: do not open any new window or
+                        tab, run in the current tab of the current window.
+    -v                  iTerm only: open new split tab vertically in the
                         current window.
-    -v                  iTerm only: Open new split tab vertically in the current window.
-    -h                  iTerm only: Open new split tab horizontally in the current window.
-    -i                  Do not try to `cd` to the target directory for testing its
-                        existence.
-                        This could fail if the script is running from an non-privileged
-                        session (e.g. Apple Shortcuts), whilst the final attempt,
-                        done by the targeted terminal app, could work perfectly.
+    -h                  iTerm only: open new split tab horizontally in the
+                        current window.
+    -i                  Suppress up-front verification of the existence of the
+                        target directory specified via the -d option.
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
     -g                  Terminal/iTerm only: create in background (don't

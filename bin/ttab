@@ -175,16 +175,18 @@ shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
 # Some more options sanity check that cannot be done inplace, (e.g. their order is not guarantied)
 
-if (( inNewSplitTabV && inNewSplitTabH )); then
+if [[ -z $dir && doNotTestDir -eq 1 ]]; then
+  # Specifying -i without also specifying -d
+  dieSyntax "The '-i' option requires '-d', directory option as well."
+elif (( inNewSplitTabV && inNewSplitTabH )); then
   # Fail, if both `-v` and `-h` provided
   dieSyntax "Both '-v' and '-h' options are presented, please use only one of them."
 elif (( inNewSplitTabV || inNewSplitTabH )); then
   # Option -v and -h cannot be used, or meaningless to use with '-g', '-G', '-w' or '-c' now
-  if (( inNewWin || inCurrent || inBackground)); then
+  if (( inNewWin || inCurrent || inBackground )); then
     dieSyntax "The '-v' and '-h' options are clashing, or meaningless if any of the '-g', '-G', '-w' or '-c' options are presented, please review your option selections."
   fi
 fi
-
 
 # Allow presetting the -l option via an environment variable.
 if [[ -z $delayCmdSubmissionBy ]]; then
@@ -392,6 +394,8 @@ else # In current tab
 
   if (( Terminal )); then
     CMD_NEWTAB_1='set newTab to selected tab of front window'
+  elif (( gnomeTerminal && inCurrent ))
+    dieSyntax "Sorry, the '-c' option cannot be used with '$terminalApp' currently."
   fi
 
 fi
@@ -710,18 +714,14 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
-    -c                  Do not open any new window or tab, run in the current 
-                        tab of the current window.
-    -v                  iTerm only: Open new split tab vertically in the 
+    -c                  Terminal/iTerm only: do not open any new window or
+                        tab, run in the current tab of the current window.
+    -v                  iTerm only: open new split tab vertically in the
                         current window.
-    -h                  iTerm only: Open new split tab horizontally in the 
+    -h                  iTerm only: open new split tab horizontally in the
                         current window.
-    -i                  Do not try to `cd` to the target directory for testing 
-                        its existence.
-                        This could fail if the script is running from an
-                        non-privileged session (e.g. Apple Shortcuts), whilst
-                        the final attempt, done by the targeted terminal app, 
-                        could work perfectly.
+    -i                  Suppress up-front verification of the existence of
+                        the target directory specified via the -d option.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
@@ -799,26 +799,29 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     window.
 
  * `-c`  
+    Terminal/iTerm2 only:  
     does not create any new window or tab, and uses the current tab in the  
     front window.  
+    This migth be useful when tterm is called from an external tool, and  
+    the tool wants targeting the actual terminal directly (e.g. from a  
+    macOS service, or Shortcut).  
 
  * `-h`  
+    iTerm2 only:  
     creates the new tab split horizontally from the current one in the front  
     window.  
 
  * `-v`  
+    iTerm2 only:  
     creates the new tab split vertically from the current one in the front  
     window.  
 
-NOTE: The `-h` and `-v` are only available in the new iTerm.  
-      These options suppress the effect of the `-g` or `-G` option.  
-
  * `-i`  
-    prevent the scrip to `cd` into the target directory for testing its  
-    existence.  
-    This could fail if the script is running from an non-privileged session  
-    (e.g. Apple Shortcuts), whilst the final attempt, done by the targeted  
-    terminal app, could work perfectly.  
+    suppresses up-front verification of the existence of the target directory  
+    specified via the -d option.  
+    This is primarily useful on macOS if this utility is launched from a  
+    non-privileged session (e.g., Apple Shortcuts) that may not have access  
+    to the target directory, whereas the targeted terminal application does.  
 
  * `-s <settings>`  
     specifies the settings set (profile) to apply to the new tab, determining  
@@ -867,7 +870,6 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
       *briefly, temporarily*, for technical reasons. The temporary activation  
       lasts as least as long as the effective -l value (command-submission   
       delay).
-      These options have no effect if the `-h` or `-v` option is used.  
 
 * `-l <secs>`  
     Terminal/iTerm2 only:  
@@ -875,7 +877,7 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
     of seconds (fractions supported); useful for shells with initialization  
     files that take a long time to process. 
     Note that setting a working dir. with -d alone requires a startup command,  
-    and that in iTerm2 setting a working dir. is always required.  
+    and that in iTerm2 setting a working dir, is always required.  
     The default is 0.1 secs; you can preset a different value via  
     environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
@@ -917,9 +919,6 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
-    # Execute the command in the current tab of the current terminal window:
-    ttab -c 'ls "$HOME/Library/Application Support"'
-
     # Open new horizontal split tab in the current terminal window:
     ttab -h
 
@@ -948,6 +947,9 @@ For license information and more, visit this utility's home page by running
 
     # Create a new tab explicitly in iTerm2.
     ttab -a iTerm2 echo "Hi from iTerm2."
+    
+    # Execute the command in the current tab of the current terminal window:
+    ttab -c 'ls "$HOME/Library/Application Support"'
 EOF_MAN_PAGE
 
 exit $ec

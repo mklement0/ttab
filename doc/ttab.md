@@ -10,15 +10,12 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
-    -c                  Do not open any new window or tab, run in the current tab of the
-                        current window.
-    -v                  iTerm only: Open new split tab vertically in the current window.
-    -h                  iTerm only: Open new split tab horizontally in the current window.
-    -i                  Do not try to `cd` to the target directory for testing its
-                        existence.
-                        This could fail if the script is running from an non-privileged
-                        session (e.g. Apple Shortcuts), whilst the final attempt,
-                        done by the targeted terminal app, could work perfectly.
+    -c                  Terminal/iTerm2 only: do not open any new window or tab, run
+                        in the current tab of the current window.
+    -v                  iTerm only: open new split tab vertically in the current window.
+    -h                  iTerm only: open new split tab horizontally in the current window.
+    -i                  Suppress up-front verification of the existence of the target
+                        directory specified via the -d option.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
@@ -96,22 +93,29 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     window.
 
 * `-c`
-    does not create any new window or tab, and uses the current tab in the front window.
+    Terminal/iTerm2 only:
+    does not create any new window or tab, and uses the current tab in the
+    front window.
+    This migth be useful when tterm is called from an external tool, and
+    the tool wants targeting the actual terminal directly (e.g. from a
+    macOS service, or Shortcut).
 
 * `-h`
-    creates the new tab split horizontally from the current one in the front window.
+    iTerm2 only:
+    creates the new tab split horizontally from the current one in the
+    front window.
 
 * `-v`
-    creates the new tab split vertically from the current one in the front window.
-
-NOTE: The `-h` and `-v` are only available in the new iTerm.
-      These options suppress the effect of the `-g` or `-G` option.
+    iTerm2 only:
+    creates the new tab split vertically from the current one in the
+    front window.
 
 * `-i`
-    prevent the scrip to `cd` into the target directory for testing its existence.
-    This could fail if the script is running from an non-privileged session
-    (e.g. Apple Shortcuts), whilst the final attempt, done by the targeted terminal app,
-    could work perfectly.
+    suppresses up-front verification of the existence of the target directory
+    specified via the -d option. This is primarily useful on macOS if this
+    utility is launched from a non-privileged session (e.g., Apple Shortcuts)
+    that may not have access to the target directory, whereas the targeted
+    terminal application does.
 
 * `-s <settings>`
     specifies the settings set (profile) to apply to the new tab, determining
@@ -209,9 +213,6 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
-    # Execute the command in the current tab of the current terminal window:
-    ttab -c 'ls "$HOME/Library/Application Support"'
-
     # Open new horizontal split tab in the current terminal window:
     ttab -h
 
@@ -239,3 +240,6 @@ For license information and more, visit this utility's home page by running
 
     # Create a new tab explicitly in iTerm2.
     ttab -a iTerm2 echo "Hi from iTerm2."
+
+    # Execute the command in the current tab of the current terminal window:
+    ttab -c 'ls "$HOME/Library/Application Support"'

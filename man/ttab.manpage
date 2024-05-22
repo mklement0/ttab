@@ -12,12 +12,14 @@ iTerm2\.app; on Linux in Gnome Terminal, if available\.
 ttab [\-w|\-v|\-h|\-c] [\-i] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
 
 \-w                  Open new tab in new terminal window\.
-\-c                  Do not open any new window or tab, run in the current tab of the
-                    current window\.
-\-v                  iTerm only: Open new split tab vertically in the current window\.
-\-h                  iTerm only: Open new split tab horizontally in the current window\.
-\-i                  Do not try to `cd` to the target directory for testing its
-                    existence\.
+\-c                  Terminal/iTerm only: do not open any new window or tab,
+                    run in the current tab of the current window\.
+\-v                  iTerm only: open new split tab vertically in the current
+                    window\.
+\-h                  iTerm only: open new split tab horizontally in the current
+                    window\.
+\-i                  Suppress up-front verification of the existence of the
+                    target directory specified via the -d option\.
 \-s <settings>       Assign a settings set (profile)\.
 \-t <title>          Specify title for new tab\.
 \-q                  Clear the new tab's screen\.
@@ -132,11 +134,21 @@ environment is fully preserved\.
 .IP \(bu 2
 \fB\-c\fP
 .br
+ Terminal/iTerm only:
+.br
  does not create any new window or tab, and uses the current tab in the front
 .br
  window\.
+.br
+This migth be useful when tterm is called from an external tool, and
+.br
+the tool wants targeting the actual terminal directly (e\.g\. from a
+.br
+macOS service, or Shortcut)\.
 .IP \(bu 2
 \fB\-h\fP
+.br
+ iTerm only:
 .br
  creates the new tab split horizontally from the current one in the front
 .br
@@ -144,28 +156,26 @@ environment is fully preserved\.
 .IP \(bu 2
 \fB\-v\fP
 .br
+ iTerm only:
+.br
  creates the new tab split vertically from the current one in the front
 .br
  window\.
 .br
-.RE
-.P
-NOTE: The `\-h` and `\-v` are only available in the new iTerm.
-.br
-      \fIbriefly, temporarily\fR, for technical reasons\. The temporary activation
-.br
-      These options suppress the effect of the `\-g` or `\-G` option.
 .RS 0
 .IP \(bu 2
 \fB\-i\fP
 .br
- prevent the scrip to `cd` into the target directory for testing its existence\.
+suppresses up-front verification of the existence of the target directory
 .br
- This could fail if the script is running from an non-privileged session
+specified via the -d option.
 .br
- (e\.g\. Apple Shortcuts), whilst the final attempt, done by the targeted
+This is primarily useful on macOS if this utility is launched from a
 .br
- terminal app, could work perfectly\.
+non-privileged session (e\.g\., Apple Shortcuts) that may not have access
+.br
+to the target directory, whereas the targeted terminal application does\.
+.br
 .IP \(bu 2
 \fB\-s <settings>\fP
 .br
