@@ -161,9 +161,9 @@ NOTE: The `\-h` and `\-v` are only available in the new iTerm.
 .br
  prevent the scrip to `cd` into the target directory for testing its existence\.
 .br
- This could fail if the script is running from an un-priviliged session
+ This could fail if the script is running from an non-privileged session
 .br
- (e\.g\. Apple Schortcuts), whilst the final attempt, done by the targeted
+ (e\.g\. Apple Shortcuts), whilst the final attempt, done by the targeted
 .br
  terminal app, could work perfectly\.
 .IP \(bu 2

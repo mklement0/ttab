@@ -701,8 +701,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     -h                  Open new split tab horizontally in the current window.
     -i                  Do not try to `cd` to the target directory for testing its
                         existence.
-                        This could fail if the script is running from an un-priviliged
-                        session (e.g. Apple Schortcuts), whilst the final attempt,
+                        This could fail if the script is running from an non-privileged
+                        session (e.g. Apple Shortcuts), whilst the final attempt,
                         done by the targeted terminal app, could work perfectly.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
@@ -794,8 +794,8 @@ NOTE: The `-h` and `-v` are only available in the new iTerm.
 
  * `-i`
     prevent the scrip to `cd` into the target directory for testing its existence.
-    This could fail if the script is running from an un-priviliged session
-    (e.g. Apple Schortcuts), whilst the final attempt, done by the targeted terminal app,
+    This could fail if the script is running from an non-privileged session
+    (e.g. Apple Shortcuts), whilst the final attempt, done by the targeted terminal app,
     could work perfectly.
 
  * `-s <settings>`

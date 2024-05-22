@@ -142,8 +142,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
     -h                  Open new split tab horizontally in the current window.
     -i                  Do not try to `cd` to the target directory for testing its
                         existence.
-                        This could fail if the script is running from an un-priviliged
-                        session (e.g. Apple Schortcuts), whilst the final attempt,
+                        This could fail if the script is running from an non-privileged
+                        session (e.g. Apple Shortcuts), whilst the final attempt,
                         done by the targeted terminal app, could work perfectly.
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
