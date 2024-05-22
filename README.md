@@ -39,9 +39,17 @@ For more information, see [Apple's support article on the subject](https://suppo
 
 With [Homebrew](https://brew.sh/) installed, run the following:
 
+* Initial installation:
+
 ```sh
 brew tap mklement0/ttab https://github.com/mklement0/ttab.git
 brew install mklement0/ttab/ttab
+```
+
+* Later updates:
+
+```sh
+brew upgrade mklement0/ttab/ttab
 ```
 
 Note:
