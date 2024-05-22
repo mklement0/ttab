@@ -373,6 +373,12 @@ elif (( inCurrent == 0 )); then  # If should not use the actual, active tab, by 
 
   fi
 
+else # In current tab
+
+  if (( Terminal )); then
+    CMD_NEWTAB_1='set newTab to selected tab of front window'
+  fi
+
 fi
 
   # Terminal/iTerm only:
