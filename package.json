@@ -14,7 +14,7 @@
   "homepage": "https://github.com/mklement0/ttab",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mklement0/ttab.git"
+    "url": "git+https://github.com/mklement0/ttab.git"
   },
   "bugs": {
     "url": "https://github.com/mklement0/ttab/issues"
