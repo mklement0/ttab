@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 kTHIS_HOMEPAGE='https://github.com/mklement0/ttab'
-kTHIS_NAME=${BASH_SOURCE##*/}
+kTHIS_NAME='ttab' # ${BASH_SOURCE##*/} NOTE: Hardcoded as in some cases the detected name can be a UUID, or similar (e.g. invoking ttab from Apple Shortcuts)
 kTHIS_VERSION='v0.8.0' # NOTE: This assignment is automatically updated by `make version VER=<newVer>` - DO keep the 'v' prefix.
 
 unset CDPATH  # To prevent unexpected `cd` behavior.
@@ -9,7 +9,7 @@ unset CDPATH  # To prevent unexpected `cd` behavior.
 # --- Begin: STANDARD HELPER FUNCTIONS
 
 die() { echo "$kTHIS_NAME: ERROR: ${1:-"ABORTING due to unexpected error."}" 1>&2; exit ${2:-1}; }
-dieSyntax() { echo "$kTHIS_NAME: ARGUMENT ERROR: ${1:-"Invalid argument(s) specified."} Use -h for help." 1>&2; exit 2; }
+dieSyntax() { echo "$kTHIS_NAME: ARGUMENT ERROR: ${1:-"Invalid argument(s) specified."} Use --help for help." 1>&2; exit 2; }
 
 # SYNOPSIS
 #   openUrl <url>
@@ -71,7 +71,7 @@ case $1 in
     # Output version number and exit, if requested.
     echo "$kTHIS_NAME $kTHIS_VERSION"$'\nFor license information and more, visit '"$kTHIS_HOMEPAGE"; exit 0
     ;;
-  -h|--help)
+  --help)
     # Print usage information and exit.
     printUsage; exit
     ;;
@@ -100,20 +100,39 @@ printScript=0 dryRun=0
 isMacOS=$([[ $(uname) == 'Darwin' ]] && echo 1 || echo 0)
 dirAbs=''
 doNotChangeDir=0
+doNotTestDir=0
 tabTitle=''
 settingsName=''
 inBackground=0
 targetTermSpecified=0
 inNewWin=0
+inCurrent=0
+inNewSplitTabH=0
+inNewSplitTabV=0
 cls=0
 terminalApp=''
+splitDirection=''
 delayCmdSubmissionBy='' && kRE_FRACTIONAL_SECONDS='^[0-9]+(\.[0-9]+)?$' && kDEFAULT_CMD_DELAY='0.1'
-while getopts ':wgGqs:t:d:a:l:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
+while getopts ':wcvhgGqis:t:d:a:l:' opt; do  # $opt will receive the option *letters* one by one; a trailing : means that an arg. is required, reported in $OPTARG.
   [[ $opt == '?' ]] && dieSyntax "Unknown option: -$OPTARG"
   [[ $opt == ':' ]] && dieSyntax "Option -$OPTARG is missing its argument."
   case "$opt" in
     w)
       inNewWin=1
+      ;;
+    c)
+      inCurrent=1
+      ;;
+    v)
+      inNewSplitTabV=1
+      splitDirection='vertically'
+      ;;
+    h)
+      inNewSplitTabH=1
+      splitDirection='horizontally'
+      ;;
+    i)
+      doNotTestDir=1
       ;;
     s)
       settingsName=$OPTARG
@@ -124,7 +143,9 @@ while getopts ':wgGqs:t:d:a:l:' opt; do  # $opt will receive the option *letters
     d)
       dir=$OPTARG
       [[ -z $dir ]] && doNotChangeDir=1
-      (( doNotChangeDir )) || { dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"; }
+      if (( doNotChangeDir == 0 )); then
+        if (( doNotTestDir )); then dirAbs=$dir; else { dirAbs=$(cd -- "$dir" 2>/dev/null && echo "$PWD") || die "No such directory: $dir"; } fi
+      fi
       ;;
     a)
       terminalApp=$OPTARG
@@ -152,12 +173,27 @@ while getopts ':wgGqs:t:d:a:l:' opt; do  # $opt will receive the option *letters
 done
 shift $((OPTIND - 1)) # Skip the already-processed arguments (options).
 
+# Some more options sanity check that cannot be done inplace, (e.g. their order is not guarantied)
+
+if [[ -z $dir && doNotTestDir -eq 1 ]]; then
+  # Specifying -i without also specifying -d
+  dieSyntax "The '-i' option requires '-d', directory option as well."
+elif (( inNewSplitTabV && inNewSplitTabH )); then
+  # Fail, if both `-v` and `-h` provided
+  dieSyntax "Both '-v' and '-h' options are presented, please use only one of them."
+elif (( inNewSplitTabV || inNewSplitTabH )); then
+  # Option -v and -h cannot be used, or meaningless to use with '-g', '-G', '-w' or '-c' now
+  if (( inNewWin || inCurrent || inBackground )); then
+    dieSyntax "The '-v' and '-h' options are clashing, or meaningless if any of the '-g', '-G', '-w' or '-c' options are presented, please review your option selections."
+  fi
+fi
+
 # Allow presetting the -l option via an environment variable.
 if [[ -z $delayCmdSubmissionBy ]]; then
   delayCmdSubmissionBy="$TTAB_CMD_DELAY"
   [[ -z $delayCmdSubmissionBy || $delayCmdSubmissionBy =~ $kRE_FRACTIONAL_SECONDS ]] || { delayCmdSubmissionBy=''; echo "WARNING: Ignoring -l preset via env. var. TTAB_CMD_DELAY, because its value isn't a positive number of (optionally fractional) seconds." >&2; }
   # If not set by env. var., use the default delay.
-  # We use a 
+  # We use a
   [[ -z $delayCmdSubmissionBy ]] && delayCmdSubmissionBy="$kDEFAULT_CMD_DELAY"
 fi
 
@@ -178,7 +214,7 @@ if [[ -n $terminalApp ]]; then
     'iTerm'|'iTerm.app'|'iTerm2'|'iTerm2.app')
       # Note: 'iTerm.app' is what $TERM_PROGRAM contains when running from iTerm.app
       iTerm=1
-      ;;  
+      ;;
     'gnome-terminal')
       gnomeTerminal=1
       ;;
@@ -207,7 +243,17 @@ while :; do
     terminalApp='gnome-terminal' # binary file name
   else # The calling program is not a known terminal.
     # Determine a platform-appropriate default.
-    (( isMacOS )) && Terminal=1 || gnomeTerminal=1
+    if (( isMacOS )); then
+      # Give a chance to detect the presence of iTerm2, if cannot be find fallback to Terminal.app as the default
+      if [[ $(mdfind "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'" 2>/dev/null) != "" ]]; then
+        iTerm=1
+        terminalApp='iTerm'
+      else
+        Terminal=1
+      fi
+    else
+      gnomeTerminal=1
+    fi
     continue
   fi
   break
@@ -223,7 +269,7 @@ done
 # To be safe, clear any pre-existing variables with names matching those we'll be using below.
 for n in ${!CMD_*}; do unset $n; done
 
-  # Note for Terminal.app: 
+  # Note for Terminal.app:
   #       We use *menu-based GUI scripting* rather than *sending keystrokes via CMD_NEWTAB_1='tell application "System Events" to keystroke "t" using {command down}'
   #       !! We try to be locale-independent, so we don't use menu-item command *names*; this requires us to make the following ASSUMPTIONS, which we expect to hold in the future:
   #             - the new *window* commands are assumed to be in a *submenu* of the *1st command* ('New Window > ...') of the Shell menu.
@@ -281,10 +327,25 @@ if (( inNewWin )); then # create the tab in a NEW WINDOW
 
   fi
 
-else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
+elif (( inNewSplitTabV || inNewSplitTabH )); then # Create the new split tab in the CURRENT WINDOW
+
+  # iTerm only: Split tabs are supported only in iTerm currently
+  # TODO: We might want to support solutions like tmux as well
+  if (( iTerm )); then # only NEW iTerm syntax has split option (I guess)
+    if [[ -n $settingsName ]]; then
+      CMD_NEWTAB_1='tell current session of current window to set newSplit to split '$splitDirection' with profile "'"$settingsName"'"'
+    else
+      CMD_NEWTAB_1='tell current session of current window to set newSplit to split '$splitDirection' with default profile'
+    fi
+    CMD_NEWTAB_2='select newSplit'
+  else
+    die "Vertical or horizontal tab splitting is not a supported in '$terminalApp'"
+  fi
+
+elif (( inCurrent == 0 )); then  # If should not use the actual, active tab, by default create a new tab in the CURRENT WINDOW (unlike `do shell script` with no target for creating a new *window*, `do shell script in front window` simply executes in the *current* tab, and there's no direct way to target a new one).
 
   if (( gnomeTerminal )); then
-  
+
     CMD_NEWTAB_1='--tab'
 
   elif (( iTerm )); then
@@ -327,6 +388,14 @@ else # Create the new tab in the CURRENT WINDOW (unlike `do shell script` with n
       fi
     fi
 
+  fi
+
+else # In current tab
+
+  if (( Terminal )); then
+    CMD_NEWTAB_1='set newTab to selected tab of front window'
+  elif (( gnomeTerminal && inCurrent ))
+    dieSyntax "Sorry, the '-c' option cannot be used with '$terminalApp' currently."
   fi
 
 fi
@@ -427,7 +496,7 @@ if (( ${#shellCmdTokens[@]} )); then # Shell command(s) specified.
   fi
 
   # Quote (escape) the custom command.
-  # !! The use of printf '%q' with its \-based escaping means that 
+  # !! The use of printf '%q' with its \-based escaping means that
   # !! shells with different escaping rules are NOT supported, notably PowerShell.
   if (( gnomeTerminal )); then
     # Form a single, quoted string that will be passed to $SHELL -c
@@ -481,7 +550,7 @@ if (( cls )); then
 fi
 
 
-  # Synthesize the full shell command.
+# Synthesize the full shell command.
 if [[ -n $quotedShellCmds ]]; then
 
   # Terminal/iTerm only:
@@ -608,18 +677,18 @@ fi
 #     - For better plain-text rendering, leave an empty line after a heading.
 #       marked-man will remove it from the ROFF version.
 #     - The first heading must be a level-1 heading containing the utility
-#       name and very brief description; append the manual-section number 
+#       name and very brief description; append the manual-section number
 #       directly to the CLI name; e.g.:
 #         # foo(1) - does bar
 #     - The 2nd, level-2 heading must be '## SYNOPSIS' and the chapter's body
 #       must render reasonably as plain text, because it is printed to stdout
-#       when  `-h`, `--help` is specified:
+#       when  `--help` is specified:
 #         Use 4-space indentation without markup for both the syntax line and the
 #         block of brief option descriptions; represent option-arguments and operands
 #         in angle brackets; e.g., '<foo>'
 #     - All other headings should be level-2 headings in ALL-CAPS.
 #   - TEXT
-#      - Use NO indentation for regular chapter text; if you do, it will 
+#      - Use NO indentation for regular chapter text; if you do, it will
 #        be indented further than list items.
 #      - Use 4-space indentation, as usual, for code blocks.
 #      - Markup character-styling markup translates to ROFF rendering as follows:
@@ -642,9 +711,17 @@ fi
 Opens a new terminal tab or window, on macOS in either Terminal.app or  
 iTerm2.app; on Linux in Gnome Terminal, if available.
 
-    ttab [-w] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
+    ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
+    -c                  Terminal/iTerm only: do not open any new window or
+                        tab, run in the current tab of the current window.
+    -v                  iTerm only: open new split tab vertically in the
+                        current window.
+    -h                  iTerm only: open new split tab horizontally in the
+                        current window.
+    -i                  Suppress up-front verification of the existence of
+                        the target directory specified via the -d option.
     -s <settings>       Assign a settings set (profile).
     -t <title>          Specify title for new tab.
     -q                  Clear the new tab's screen.
@@ -721,6 +798,31 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     creates the new tab in a new window rather than in the front  
     window.
 
+ * `-c`  
+    Terminal/iTerm2 only:  
+    does not create any new window or tab, and uses the current tab in the  
+    front window.  
+    This migth be useful when tterm is called from an external tool, and  
+    the tool wants targeting the actual terminal directly (e.g. from a  
+    macOS service, or Shortcut).  
+
+ * `-h`  
+    iTerm2 only:  
+    creates the new tab split horizontally from the current one in the front  
+    window.  
+
+ * `-v`  
+    iTerm2 only:  
+    creates the new tab split vertically from the current one in the front  
+    window.  
+
+ * `-i`  
+    suppresses up-front verification of the existence of the target directory  
+    specified via the -d option.  
+    This is primarily useful on macOS if this utility is launched from a  
+    non-privileged session (e.g., Apple Shortcuts) that may not have access  
+    to the target directory, whereas the targeted terminal application does.  
+
  * `-s <settings>`  
     specifies the settings set (profile) to apply to the new tab, determining  
     the appearance and behavior of the new tab.  
@@ -775,7 +877,7 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
     of seconds (fractions supported); useful for shells with initialization  
     files that take a long time to process. 
     Note that setting a working dir. with -d alone requires a startup command,  
-    and that in iTerm2 setting a working dir. is always required.  
+    and that in iTerm2 setting a working dir, is always required.  
     The default is 0.1 secs; you can preset a different value via  
     environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
@@ -817,6 +919,14 @@ For license information and more, visit this utility's home page by running
     # Open new tab in new terminal window:
     ttab -w
 
+    # Open new horizontal split tab in the current terminal window:
+    ttab -h
+
+    # Open new vertical split tab in the current terminal window, changing
+    # the path to the given path, but without checking the presence of the 
+    # target directory:
+    ttab -v -i -d "$HOME/Library/Application Support"
+
     # Open new tab with title 'Green' using settings (profile) 'Grass':
     ttab -t Green -s Grass  
 
@@ -837,6 +947,9 @@ For license information and more, visit this utility's home page by running
 
     # Create a new tab explicitly in iTerm2.
     ttab -a iTerm2 echo "Hi from iTerm2."
+    
+    # Execute the command in the current tab of the current terminal window:
+    ttab -c 'ls "$HOME/Library/Application Support"'
 EOF_MAN_PAGE
 
 exit $ec

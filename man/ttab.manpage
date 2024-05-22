@@ -9,9 +9,17 @@ iTerm2\.app; on Linux in Gnome Terminal, if available\.
 .P
 .RS 2
 .nf
-ttab [\-w] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
+ttab [\-w|\-v|\-h|\-c] [\-i] [\-s <settings>] [\-t <title>] [\-q] [\-g|\-G] [\-d <dir>] [<cmd> \.\.\.]
 
 \-w                  Open new tab in new terminal window\.
+\-c                  Terminal/iTerm only: do not open any new window or tab,
+                    run in the current tab of the current window\.
+\-v                  iTerm only: open new split tab vertically in the current
+                    window\.
+\-h                  iTerm only: open new split tab horizontally in the current
+                    window\.
+\-i                  Suppress up-front verification of the existence of the
+                    target directory specified via the -d option\.
 \-s <settings>       Assign a settings set (profile)\.
 \-t <title>          Specify title for new tab\.
 \-q                  Clear the new tab's screen\.
@@ -85,7 +93,7 @@ tab on termination of the shell\.
 .br
 Precede \fBexit\fP with \fBread \-rsn 1\fP to wait for a keystroke first\.
 .P
-IMPORTANT: Specifying a command to execute in the new tab has limitations:  
+IMPORTANT: Specifying a command to execute in the new tab has limitations:
 .RS 0
 .IP \(bu 2
 Specifying a startup command is only supported for POSIX\-compatible shells,
@@ -124,6 +132,51 @@ environment is fully preserved\.
 .br
  window\.
 .IP \(bu 2
+\fB\-c\fP
+.br
+ Terminal/iTerm only:
+.br
+ does not create any new window or tab, and uses the current tab in the front
+.br
+ window\.
+.br
+This migth be useful when tterm is called from an external tool, and
+.br
+the tool wants targeting the actual terminal directly (e\.g\. from a
+.br
+macOS service, or Shortcut)\.
+.IP \(bu 2
+\fB\-h\fP
+.br
+ iTerm only:
+.br
+ creates the new tab split horizontally from the current one in the front
+.br
+ window\.
+.IP \(bu 2
+\fB\-v\fP
+.br
+ iTerm only:
+.br
+ creates the new tab split vertically from the current one in the front
+.br
+ window\.
+.br
+.RS 0
+.IP \(bu 2
+\fB\-i\fP
+.br
+suppresses up-front verification of the existence of the target directory
+.br
+specified via the -d option.
+.br
+This is primarily useful on macOS if this utility is launched from a
+.br
+non-privileged session (e\.g\., Apple Shortcuts) that may not have access
+.br
+to the target directory, whereas the targeted terminal application does\.
+.br
+.IP \(bu 2
 \fB\-s <settings>\fP
 .br
  specifies the settings set (profile) to apply to the new tab, determining
@@ -147,7 +200,7 @@ environment is fully preserved\.
 .IP \(bu 2
 \fB\-t <title>\fP
 .br
- specifies a custom title to assign to the new tab\.    
+ specifies a custom title to assign to the new tab\.
 .IP \(bu 2
 \fB\-d <dir>\fP
 .br
@@ -214,7 +267,7 @@ NOTE: Terminal/iTerm2: With \fB\-g\fP or \fB\-G\fP, the new tab will still activ
 .br
   of seconds (fractions supported); useful for shells with initialization
 .br
-  files that take a long time to process\. 
+  files that take a long time to process\.
   Note that setting a working dir\. with \-d alone requires a startup command,
 .br
   and that in iTerm2 setting a working dir\. is always required\.
@@ -243,13 +296,13 @@ NOTE: Terminal/iTerm2: With \fB\-g\fP or \fB\-G\fP, the new tab will still activ
 All standard options provide information only\.
 .RS 0
 .IP \(bu 2
-\fB\-h, \-\-help\fP
+\fB\-\-help\fP
 .br
  Prints the contents of the synopsis chapter to stdout for quick reference\.
 .IP \(bu 2
 \fB\-\-man\fP
 .br
- Displays this manual page, which is a helpful alternative to using \fBman\fP, 
+ Displays this manual page, which is a helpful alternative to using \fBman\fP,
  if the manual page isn't installed\.
 .IP \(bu 2
 \fB\-\-version\fP
@@ -276,8 +329,18 @@ ttab
 # Open new tab in new terminal window:
 ttab \-w
 
+# Execute the command in the current tab of the current terminal window:
+ttab \-c 'ls "$HOME/Library/Application Support"'
+
+# Open new horizontal split tab in the current terminal window:
+ttab \-h
+
+# Open new vertical split tab in the current terminal window, changing the path to the
+# given path, but without checking the presence of the target directory:
+ttab \-v \-i \-d "$HOME/Library/Application Support"
+
 # Open new tab with title 'Green' using settings (profile) 'Grass':
-ttab \-t Green \-s Grass  
+ttab \-t Green \-s Grass
 
 # Open new tab and execute a command in it:
 ttab ls \-l "$HOME/Library/Application Support"
@@ -289,7 +352,7 @@ ttab \-d "$HOME/Library/Application Support" ls \-l
 # If configured via the default profile, also close the tab\.
 ttab exec /path/to/someprogram arg1 arg2
 
-# Pass a multi\-command string as a single, quoted string, wait for a  
+# Pass a multi\-command string as a single, quoted string, wait for a
 # keystroke, then exit\.
 ttab 'ls "$HOME/Library/Application Support";
                             echo Press any key to exit; read \-rsn 1; exit'
@@ -298,4 +361,3 @@ ttab 'ls "$HOME/Library/Application Support";
 ttab \-a iTerm2 echo "Hi from iTerm2\."
 .fi
 .RE
-
