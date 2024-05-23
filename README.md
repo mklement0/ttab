@@ -73,6 +73,7 @@ With [Node.js](http://nodejs.org/) installed, install from the [npm registry](ht
 
 - Whether you need `sudo` depends on how you installed Node.js and whether you've [changed permissions later](https://docs.npmjs.com/getting-started/fixing-npm-permissions); if you get an `EACCES` error, try again with `sudo`.
 - The `-g` ensures [_global_ installation](https://docs.npmjs.com/getting-started/installing-npm-packages-globally) and is needed to put `ttab` in your system's `$PATH`.
+- To remove `ttab` later, run `npm rm ttab -g`.
 
 ## Manual installation
 
