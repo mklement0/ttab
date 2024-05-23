@@ -31,8 +31,10 @@ $env:HOMEBREW_NO_AUTO_UPDATE=1; brew install --formula ./ttab.rb
 
 NOTE: Since `ttab` is only available via a custom Homebrew *tap*, there is NO need to submit a PR
       to the Homebrew repo (unlike for `fileicon`).
-      However, `brew update` may need to be run to see the latest published version via the
-      repo's `.rb` file.
+      However, `brew upgrade mklement0/ttab/ttab` must be run to get the latest version
+      based on the repo's `.rb` file.
+      ?? TBD: Does this need a general `brew update` first, or does the above do that
+      implicitly?
 
 # Consider supporting PowerShell
 
