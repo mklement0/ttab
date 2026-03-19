@@ -202,6 +202,7 @@ fi
 # Identify the terminal application that was explicitly specified.
 Terminal=0
 iTerm=0
+ghostty=0
 gnomeTerminal=0
 if [[ -n $terminalApp ]]; then
   shopt -s nocasematch  # we want to match the application name case-INSensitively.
@@ -214,6 +215,10 @@ if [[ -n $terminalApp ]]; then
     'iTerm'|'iTerm.app'|'iTerm2'|'iTerm2.app')
       # Note: 'iTerm.app' is what $TERM_PROGRAM contains when running from iTerm.app
       iTerm=1
+      ;;
+    'ghostty'|'Ghostty'|'Ghostty.app')
+      # Note: 'ghostty' is what $TERM_PROGRAM contains when running from Ghostty.app
+      ghostty=1
       ;;
     'gnome-terminal')
       gnomeTerminal=1
@@ -235,6 +240,9 @@ while :; do
     #       so we need to distinguish versions below.
     #       $iTermOld reflects a pre-v3 version.
     [[ $(osascript -e 'version of application "iTerm"') =~ ^(1|2) ]] && iTermOld=1 || iTermOld=0
+  elif [[ $ghostty == 1 || $TERM_PROGRAM == 'ghostty' ]]; then
+    ghostty=1
+    terminalApp='Ghostty' # will be used with `activate application`
   elif [[ $Terminal == 1 || $TERM_PROGRAM == 'Apple_Terminal' ]]; then
     Terminal=1
     terminalApp='Terminal' # will be used with `activate application`
@@ -244,10 +252,13 @@ while :; do
   else # The calling program is not a known terminal.
     # Determine a platform-appropriate default.
     if (( isMacOS )); then
-      # Give a chance to detect the presence of iTerm2, if cannot be find fallback to Terminal.app as the default
+      # Give a chance to detect the presence of iTerm2 or Ghostty, if cannot find fallback to Terminal.app as the default
       if [[ $(mdfind "kMDItemCFBundleIdentifier == 'com.googlecode.iterm2'" 2>/dev/null) != "" ]]; then
         iTerm=1
         terminalApp='iTerm'
+      elif [[ $(mdfind "kMDItemCFBundleIdentifier == 'com.mitchellh.ghostty'" 2>/dev/null) != "" ]]; then
+        ghostty=1
+        terminalApp='Ghostty'
       else
         Terminal=1
       fi
@@ -260,10 +271,11 @@ while :; do
 done
 
 # Make sure that the targeted terminal app is actually present.
-(( (iTerm || Terminal) && ! isMacOS )) && die "Terminal.app / iTerm2.app can only be targeted on macOS."
+(( (iTerm || Terminal || ghostty) && ! isMacOS )) && die "Terminal.app / iTerm2.app / Ghostty.app can only be targeted on macOS."
 # Note: It's hypothetically possible to install gnome-terminal on macOS, via MacPorts.
 (( gnomeTerminal )) && { which gnome-terminal &>/dev/null || die "Cannot locate Gnome Terminal's binary, gnome-terminal."; }
-(( iTerm )) && {  osascript -e "version of application \"$terminalApp\"" &>/dev/null || die "Cannot locate Gnome Terminal's binary, gnome-terminal."; }
+(( iTerm )) && {  osascript -e "version of application \"$terminalApp\"" &>/dev/null || die "Cannot locate iTerm2.app."; }
+(( ghostty )) && { osascript -e "id of application \"$terminalApp\"" &>/dev/null || die "Cannot locate Ghostty.app."; }
 # (( Terminal )) # no need to check - Terminal.app comes with macOS.
 
 # To be safe, clear any pre-existing variables with names matching those we'll be using below.
@@ -282,6 +294,13 @@ for n in ${!CMD_*}; do unset $n; done
 if (( gnomeTerminal )); then
   if [[ -n $settingsName ]]; then
     CMD_OPT_PROFILE="--profile='${settingsName}'"
+  fi
+fi
+
+if (( ghostty )); then
+  if [[ -n $settingsName ]]; then
+    echo "WARNING: Ghostty does not support named profiles; ignoring -s option." >&2
+    settingsName=''
   fi
 fi
 
@@ -310,6 +329,14 @@ if (( inNewWin )); then # create the tab in a NEW WINDOW
         CMD_REACTIVATE_PREV_TAB='tell application "System Events" to perform action "AXRaise" of window (name of prevWin) of application process "iTerm2"'
       fi
     fi
+  elif (( ghostty )); then
+
+    CMD_NEWTAB_1='new window'
+    if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within Ghostty
+      CMD_SAVE_ACTIVE_TAB='set prevWin to front window'
+      CMD_REACTIVATE_PREV_TAB='tell application "System Events" to perform action "AXRaise" of window (name of prevWin) of application process "Ghostty"'
+    fi
+
   else # Terminal.app
 
     if [[ -n $settingsName ]]; then
@@ -329,8 +356,7 @@ if (( inNewWin )); then # create the tab in a NEW WINDOW
 
 elif (( inNewSplitTabV || inNewSplitTabH )); then # Create the new split tab in the CURRENT WINDOW
 
-  # iTerm only: Split tabs are supported only in iTerm currently
-  # TODO: We might want to support solutions like tmux as well
+  # Split tabs are supported in iTerm and Ghostty
   if (( iTerm )); then # only NEW iTerm syntax has split option (I guess)
     if [[ -n $settingsName ]]; then
       CMD_NEWTAB_1='tell current session of current window to set newSplit to split '$splitDirection' with profile "'"$settingsName"'"'
@@ -338,6 +364,11 @@ elif (( inNewSplitTabV || inNewSplitTabH )); then # Create the new split tab in 
       CMD_NEWTAB_1='tell current session of current window to set newSplit to split '$splitDirection' with default profile'
     fi
     CMD_NEWTAB_2='select newSplit'
+  elif (( ghostty )); then
+    # Ghostty uses direction names: right (vertical), down (horizontal)
+    ghosttySplitDir='right'
+    (( inNewSplitTabH )) && ghosttySplitDir='down'
+    CMD_NEWTAB_1="tell focused terminal of selected tab of front window to split $ghosttySplitDir"
   else
     dieSyntax "Vertical or horizontal tab splitting is not supported in $terminalApp."
   fi
@@ -369,6 +400,14 @@ elif (( inCurrent == 0 )); then  # If should not use the actual, active tab, by 
       fi
     fi
 
+  elif (( ghostty )); then
+
+    CMD_NEWTAB_1='new tab in front window'
+    if (( inBackground == 2 )); then # For use with -G: commands for saving and restoring the previous state within Ghostty
+      CMD_SAVE_ACTIVE_TAB='set prevTab to selected tab of front window'
+      CMD_REACTIVATE_PREV_TAB='select tab prevTab'
+    fi
+
   else # Terminal.app
 
     if [[ -n $settingsName ]]; then
@@ -397,6 +436,7 @@ else # In current tab (-c)
   elif (( gnomeTerminal && inCurrent )); then
     dieSyntax "The '-c' option is not supported in $terminalApp."
   fi
+  # Ghostty and iTerm: no special setup needed for -c; commands are sent to the current session.
 
 fi
 
@@ -450,8 +490,9 @@ fi
 #             * Terminal: the *caller's currrent dir., as known to Terminal* (see below) is used.
 #       Also, to be safe, if a target terminal is explicitly specified, we also
 #       default to issuing setting the current dir. explicitly, because it might be a different terminal than the current one.
-if (( iTerm || targetTermSpecified )); then
-  # iTerm2 always defaults to the home dir., so we must always add an explicit `cd` command to ensure that the current dir. is used.
+if (( iTerm || ghostty || targetTermSpecified )); then
+  # iTerm2 / Ghostty always default to the home dir., so we must always ensure the current dir. is used.
+  # For Ghostty, the dir will be applied via surface configuration rather than a `cd` command.
   if [[ -z $dirAbs ]]; then
     dirAbs=$PWD
   fi
@@ -520,6 +561,10 @@ if (( gnomeTerminal )); then # gnome-terminal has a dedicated option
   # gnome-terminal *always* uses the caller's working dir.
   [[ -n $dirAbs ]] && CMD_OPT_CWD="--working-directory=\"$dirAbs\""
 
+elif (( ghostty )); then
+
+  : # Ghostty: working dir. is set via surface configuration in the AppleScript synthesis below.
+
 else # Terminal/iTerm
 
   # Prepend the 'cd' command, if specified or needed - unless suppressed.
@@ -569,6 +614,10 @@ if [[ -n $quotedShellCmds ]]; then
     else # NEW iTerm syntax (introduced in v3)
       CMD_CUSTOM="tell current session of current window to write text \"${quotedShellCmdsForAppleScript}\""
     fi
+  elif (( ghostty )); then
+    # Ghostty: command will be sent via surface configuration's `initial input` property
+    # in the script synthesis below, so we store the AppleScript-escaped command for later use.
+    ghosttyInitialInput="${quotedShellCmdsForAppleScript}"
   else # Terminal.app
     CMD_CUSTOM="do script \"${quotedShellCmdsForAppleScript}\" in newTab"
   fi
@@ -589,6 +638,8 @@ if [[ -n $tabTitle ]]; then # custom tab title specified
     else # NEW iTerm syntax (introduced in v3)
       CMD_TITLE="tell current session of current window to set name to \"$tabTitle\""
     fi
+  elif (( ghostty )); then
+    CMD_TITLE="set name of selected tab of front window to \"$tabTitle\""
   else  # Terminal.app
     CMD_TITLE="set custom title of newTab to \"$tabTitle\""
   fi
@@ -623,6 +674,38 @@ if (( gnomeTerminal )); then
 
   script="$terminalApp $CMD_NEWTAB_1 $CMD_OPT_ACTIVATE $CMD_OPT_CWD $CMD_OPT_PROFILE $CMD_TITLE $CMD_OPT_CUSTOM"
 
+elif (( ghostty )); then # Ghostty
+
+  # Build surface configuration.
+  # Ghostty requires a surface configuration object for new tab/window/split creation,
+  # and uses it to set the initial working directory and initial input (command).
+  # Commands are sent via `initial input` in the surface config rather than after tab creation,
+  # so no delay is needed.
+  CMD_GHOSTTY_CFG='set cfg to new surface configuration'
+  CMD_GHOSTTY_CFG_REF=' with configuration cfg'
+  if [[ -n $dirAbs && $doNotChangeDir -eq 0 ]]; then
+    CMD_GHOSTTY_CFG+=$'\n    '"set initial working directory of cfg to \"$dirAbs\""
+  fi
+  if [[ -n $ghosttyInitialInput ]]; then
+    CMD_GHOSTTY_CFG+=$'\n    '"set initial input of cfg to (\"${ghosttyInitialInput}\" & return)"
+  fi
+
+  # Synthesize the entire AppleScript.
+  read -d '' -r script <<EOF
+  $CMD_SAVE_ACTIVE_APPNAME
+  tell application "$terminalApp"
+    $CMD_ACTIVATE
+    $CMD_SAVE_ACTIVE_TAB
+    $CMD_GHOSTTY_CFG
+    $CMD_NEWTAB_1${CMD_GHOSTTY_CFG_REF}
+    $CMD_NEWTAB_2
+    $CMD_TITLE
+    $CMD_REACTIVATE_PREV_TAB
+  end tell
+  $CMD_REACTIVATE_PREV_APP
+  return
+EOF
+
 else # Terminal/iTerm2
 
   # Insert a delay before submitting a custom command and/or directory-changing command via AppleScript
@@ -656,7 +739,7 @@ fi
 if (( gnomeTerminal )); then
   eval $script
   ec=$?
-else
+else # Terminal/iTerm2/Ghostty
   # Note: By using `exec` we pass `osascript`'s exit code through and
   #       END EXECUTION HERE, so that that the `: <<...` here-doc for the man page
   #       below doesn't reset the exit code to 0.
@@ -710,14 +793,14 @@ fi
 
 ## SYNOPSIS
 
-Opens a new terminal tab or window, on macOS in either Terminal.app or  
-iTerm2.app; on Linux in Gnome Terminal, if available.
+Opens a new terminal tab or window, on macOS in Terminal.app, iTerm2.app,
+or Ghostty.app; on Linux in Gnome Terminal, if available.
 
     ttab [-w|-v|-h|-c] [-i] [-s <settings>] [-t <title>] [-q] [-g|-G] [-d <dir>] [<cmd> ...]
 
     -w                  Open new tab in new terminal window.
-    -v                  iTerm only: create a new vertical split
-    -h                  iTerm only: create a new horizontal split
+    -v                  iTerm/Ghostty: create a new vertical split
+    -h                  iTerm/Ghostty: create a new horizontal split
     -c                  Terminal/iTerm only: do not open any new window or
                         tab, run in the current tab of the current window.
     -i                  Suppress up-front verification of the existence of
@@ -734,7 +817,8 @@ iTerm2.app; on Linux in Gnome Terminal, if available.
                         the current dir. in Terminal/iTerm.
     -l <secs>           Terminal/iTerm only: delay startup command submission;
                         may be preset via env. var. TTAB_CMD_DELAY
-    -a Terminal | iTerm Open the new tab in the given terminal app on macOS.
+    -a Terminal | iTerm | Ghostty
+                        Open the new tab in the given terminal app on macOS.
     <cmd> ...           Command to execute in the new tab.
     "<cmd> ...; ..."    Multi-command command line (passed as single operand).
 
@@ -746,8 +830,8 @@ Standard options: `--help`, `--man`, `--version`, `--home`
 including executing a command in the new tab, assigning a title and working  
 directory, and opening the tab in a new window.
 
-Supports Terminal.app and iTerm2.app on macOS, and - with limitations -  
-gnome-terminal on Linux.
+Supports Terminal.app, iTerm2.app, and Ghostty.app on macOS, and - with
+limitations - gnome-terminal on Linux.
 
 Note: iTerm2 and gnome-terminal support is currently not covered by the  
 automated tests run before every release.
@@ -805,13 +889,13 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     This is primarily useful when launching this utility from a macOS service  
     or Shortcuts.app shortcut, for targeting the target terminal's current tab.  
 
- * `-h`  
-    iTerm2 only:  
-    creates a new horizontal split in the current tab.  
+ * `-h`
+    iTerm2/Ghostty only:
+    creates a new horizontal split in the current tab.
 
- * `-v`  
-    iTerm2 only:  
-    creates a (new) vertical split in the current tab.  
+ * `-v`
+    iTerm2/Ghostty only:
+    creates a (new) vertical split in the current tab.
 
  * `-i`  
     suppresses up-front verification of the existence of the target directory  
@@ -828,9 +912,11 @@ IMPORTANT: Specifying a command to execute in the new tab has limitations:
     causes an error.  
     o iTerm2: profiles are defined in Preferences > Profiles; name matching  
     is case-*sensitive*, and specifying a nonexistent profile causes an error.
-    o gnome-terminal: profiles are defined in Edit > Preferences; name matching  
-    is case-*sensitive*, and specifying a nonexistent profile falls back to  
+    o gnome-terminal: profiles are defined in Edit > Preferences; name matching
+    is case-*sensitive*, and specifying a nonexistent profile falls back to
     to the default profile.
+    o Ghostty: named profiles are not supported; the -s option is ignored with
+    a warning.
 
  * `-t <title>`   
     specifies a custom title to assign to the new tab.    
@@ -879,11 +965,11 @@ NOTE: Terminal/iTerm2: With `-g` or `-G`, the new tab will still activate
     The default is 0.1 secs; you can preset a different value via  
     environment variable TTAB_CMD_DELAY. Note the impact on -g / -G.
 
-* `-a Terminal` or `-a iTerm2`  
-    explicitly specifies which terminal application to use on macOS;  
-    by default, the terminal application from which this utility is run is  
-    implied, if supported, with Terminal / gnome-terminal used as the default  
-    on  macOS / Linux.  
+* `-a Terminal` or `-a iTerm2` or `-a Ghostty`
+    explicitly specifies which terminal application to use on macOS;
+    by default, the terminal application from which this utility is run is
+    implied, if supported, with Terminal / gnome-terminal used as the default
+    on  macOS / Linux.
     This option is useful for calling this utility from non-terminal  
     applications such as Alfred (https://www.alfredapp.com/) on macOS.
 
